@@ -38,7 +38,6 @@
     this.curvature = 0;
     this.target = 0;
     this.warp = 0;
-    this.deaths = 0;
     this.switches = 0;
     this.camX = 0;
     this.menuIndex = 0;
@@ -89,7 +88,6 @@
     this.curvature = 0;
     this.target = 0;
     this.warp = 0.35;
-    this.deaths = 0;
     this.switches = 0;
     this.hintTime = lv.id === 1 ? 14 : 0;
     this.hintDismissed = false;
@@ -124,7 +122,6 @@
 
   Game.prototype.die = function () {
     if (this.state !== 'play') return;
-    this.deaths++;
     this.audio.play('fall', 0.7);
     this.burst(this.player.x + 5 * K, this.player.y + 7 * K, '#c45646', 16, { speed: 2.1, glow: true });
     this.ring(this.player.x + 5 * K, this.player.y + 7 * K, '#c45646', 26, 0.5);

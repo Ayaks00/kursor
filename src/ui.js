@@ -17,7 +17,6 @@
     this.toast = document.getElementById('toast');
     this.el = {
       level: document.getElementById('hud-level'),
-      stats: document.getElementById('hud-stats'),
       chakCount: document.getElementById('chak-count'),
       chakTotal: document.getElementById('chak-total'),
       chakFill: document.getElementById('chak-fill'),
@@ -125,7 +124,6 @@
       var taken = 0;
       for (var i = 0; i < game.items.length; i++) if (game.items[i].taken) taken++;
       this.el.level.textContent = level.id + '. ' + level.name;
-      this.el.stats.textContent = 'СМЕРТИ ' + game.deaths;
       this.el.chakCount.textContent = taken;
       this.el.chakTotal.textContent = '/ ' + game.items.length;
       this.el.chakFill.style.width = (game.items.length ? Math.round(taken / game.items.length * 100) : 0) + '%';
@@ -142,7 +140,7 @@
     if (state === 'complete') {
       this.el.completeName.textContent = game.level.name;
       this.el.completeTime.textContent = 'ВРЕМЯ: ' + game.timeInLevel.toFixed(1) + ' с';
-      this.el.completeStats.textContent = 'ПЕРЕКЛЮЧЕНИЙ: ' + game.switches + '   СМЕРТЕЙ: ' + game.deaths;
+      this.el.completeStats.textContent = 'ПЕРЕКЛЮЧЕНИЙ: ' + game.switches;
     }
 
     var showToast = game.toastTime > 0;

@@ -38,6 +38,7 @@
     this.buildPauseButtons();
     this.resize();
     window.addEventListener('resize', function () { self.resize(); });
+    if (window.requestAnimationFrame) window.requestAnimationFrame(function () { self.resize(); });
 
     // Клик по экранам «Как играть», «Об игре», «Выход» и титрам возвращает в меню.
     this.root.addEventListener('click', function (e) {
@@ -49,7 +50,8 @@
   }
 
   UI.prototype.resize = function () {
-    var w = this.stage.clientWidth || 480;
+    var w = this.stage.clientWidth || (this.root && this.root.clientWidth) || window.innerWidth || 480;
+    w = Math.max(320, w);
     this.stage.style.setProperty('--u', (w / 480) + 'px');
   };
 

@@ -9,7 +9,7 @@ DIST = ROOT / 'dist'
 ZIP = ROOT / 'kursor-lobachevsky-web.zip'
 
 FILES = [
-    'index.html',
+    'index.html', 'play.html',
     'css/style.css',
     'src/sfx-data.js', 'src/audio.js', 'src/input.js', 'src/art.js',
     'src/levels.js', 'src/game.js', 'src/ui.js', 'src/main.js',

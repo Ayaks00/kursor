@@ -22,9 +22,7 @@
   // Заголовки — античный засечный шрифт, мелкий HUD — моноширинный для читаемости.
   A.font = function (size, bold, mono) {
     // Tahoma/Georgia есть на Windows, Chrome и Яндекс Браузере; DejaVu — запасной вариант на Linux.
-    var family = (mono || size < 10)
-      ? 'Tahoma, "Segoe UI", "DejaVu Sans", Arial, sans-serif'
-      : 'Georgia, "Times New Roman", "DejaVu Serif", serif';
+    var family = 'Georgia, "Times New Roman", "DejaVu Serif", serif';
     return (bold ? 'bold ' : '') + size + 'px ' + family;
   };
 
@@ -289,8 +287,8 @@
     }
     // Пока картинка грузится (и в headless-инструментах) — процедурный запасной вариант.
     var pal = level.palette;
-    if (level.bg === 'bauman') A.bauman(ctx, camX, time, pal);
-    else if (level.bg === 'kfu') A.kfu(ctx, camX, time, pal);
+    if (level.bg === 'main' || level.bg === 'kfu') A.kfu(ctx, camX, time, pal);
+    else if (level.bg === 'bauman') A.bauman(ctx, camX, time, pal);
     else if (level.bg === 'observatory') A.observatory(ctx, camX, time, pal);
     else A.kremlin(ctx, camX, time, pal);
   };

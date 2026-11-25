@@ -14,7 +14,7 @@ FILES = [
     'src/bg-data.js', 'src/sfx-data.js', 'src/audio.js', 'src/input.js', 'src/art.js',
     'src/levels.js', 'src/game.js', 'src/ui.js', 'src/main.js',
     'README.md', 'CREDITS.md',
-    'assets/bg/bauman.png', 'assets/bg/kfu.png', 'assets/bg/observatory.png', 'assets/bg/kremlin.png',
+    'assets/bg/kfu-main.png',
     'assets/sfx/jump.ogg', 'assets/sfx/coin.ogg', 'assets/sfx/fall.ogg',
     'assets/sfx/land.ogg', 'assets/sfx/break.ogg', 'assets/sfx/toggle.mp3',
     'assets/sfx/click.mp3', 'assets/sfx/checkpoint.mp3', 'assets/sfx/win.mp3',

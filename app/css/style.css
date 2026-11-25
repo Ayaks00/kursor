@@ -41,8 +41,8 @@ body {
   width: min(96vw, calc(96vh * 16 / 9));
   height: auto;
   aspect-ratio: 16 / 9;
-  image-rendering: pixelated;
   image-rendering: crisp-edges;
+  image-rendering: pixelated;
   background: #101026;
   cursor: default;
   outline: none;
@@ -231,6 +231,29 @@ h1, h2 {
 #boss-box .meter { width: calc(var(--u) * 144); height: calc(var(--u) * 7); background: #3a2033; margin: calc(var(--u) * 2) auto; }
 #boss-fill { display: block; height: 100%; width: 100%; background: #e06f4c; }
 #boss-box .hint { font-size: calc(var(--u) * 9); color: var(--gold); }
+
+#skills-box {
+  position: absolute; right: calc(var(--u) * 5); bottom: calc(var(--u) * 6);
+  width: calc(var(--u) * 148); display: flex; flex-direction: column;
+  gap: calc(var(--u) * 3);
+}
+.skill {
+  position: relative; text-align: left;
+  padding: calc(var(--u) * 2) calc(var(--u) * 12) calc(var(--u) * 3) calc(var(--u) * 4);
+  background: rgba(9, 9, 22, 0.82); border: 1px solid rgba(217, 177, 92, 0.45);
+}
+.skill-name { font-size: calc(var(--u) * 7); color: var(--gold); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.skill-meter { height: calc(var(--u) * 3); margin-top: calc(var(--u) * 1); background: #3a2d20; }
+.skill-meter i { display: block; height: 100%; width: 100%; background: #8a6b3d; }
+.skill.ready .skill-meter i { background: linear-gradient(90deg, #96703a, #8ee9f2); }
+.skill.locked { border-color: #8ee9f2; }
+.skill.locked .skill-meter i { background: #8ee9f2; }
+.skill-key {
+  position: absolute; right: calc(var(--u) * 2); top: calc(var(--u) * 4);
+  width: calc(var(--u) * 8); height: calc(var(--u) * 8); line-height: calc(var(--u) * 8);
+  text-align: center; font-size: calc(var(--u) * 7); color: #fff4d0;
+  border: 1px solid var(--gold); background: #2c2419;
+}
 
 #hint-box {
   display: none; position: absolute; left: 50%; bottom: calc(var(--u) * 38);

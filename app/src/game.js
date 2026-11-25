@@ -49,6 +49,7 @@
     this.quizAnswered = false;
     this.quizCorrect = false;
     this.respawnPlane = 0;
+    this.skills = { ideal: { cd: 0, cdMax: 9, lock: 0 }, dash: { cd: 0, cdMax: 5 } };
     this.particles = [];
     this.effects = [];
     this.shakeTime = 0; this.shakeMag = 0;
@@ -111,6 +112,7 @@
     this.camX = 0;
     this.camY = 0;
     this.respawnPlane = 0;
+    this.skills = { ideal: { cd: 0, cdMax: 9, lock: 0 }, dash: { cd: 0, cdMax: 5 } };
     if (lv.boss) {
       var done = 0;
       for (var qk in this.save.quiz) if (this.save.quiz[qk]) done++;
@@ -127,6 +129,7 @@
     p.x = this.respawn.x; p.y = this.respawn.y;
     p.vx = 0; p.vy = 0; p.onGround = false; p.groundIdx = -1;
     p.coyote = 0; p.jumpBuf = 0;
+    p.dash = 0; p.dashSpeed = 0;
     p.trail = [];
   };
 
@@ -175,6 +178,7 @@
     this.camX = clamp(this.player.x - W * 0.38, 0, Math.max(0, this.level.worldW - W));
     this.camY = clamp(this.player.y - H * 0.52, this.level.worldTop, 0);
     this.invuln = 1.8;
+    this.skills.ideal.cd = 0; this.skills.ideal.lock = 0; this.skills.dash.cd = 0;
     if (this.boss) {
       this.boss.fireballs = [];
       this.boss.fireTimer = 1.6;
@@ -484,11 +488,61 @@
     }
   };
 
+  Game.prototype.updateSkills = function (dt) {
+    var sk = this.skills, inp = this.input;
+    if (sk.ideal.cd > 0) sk.ideal.cd = Math.max(0, sk.ideal.cd - dt);
+    if (sk.dash.cd > 0) sk.dash.cd = Math.max(0, sk.dash.cd - dt);
+    if (sk.ideal.lock > 0) {
+      sk.ideal.lock = Math.max(0, sk.ideal.lock - dt);
+      this.target = 1;
+    }
+
+    if (inp.idealPressed() && sk.ideal.cd <= 0) {
+      sk.ideal.cd = sk.ideal.cdMax;
+      sk.ideal.lock = 2.6;
+      this.target = 1;
+      this.curvature = 1;
+      this.warp = 0;
+      this.lastSwitchAt = this.time;
+      this.switches++;
+      this.audio.play('toggle', 0.55);
+      var px = this.player.x + 5 * K, py = this.player.y + 6 * K;
+      var vx = this.level.vanish.x, vy = this.level.vanish.y;
+      for (var i = 0; i < 6; i++) {
+        this.spark(lerp(px, vx, i / 6), lerp(py, vy, i / 6), '#8ee9f2', {
+          speed: 1.8, size: 2, glow: true, gravity: 0, life: 0.55
+        });
+      }
+      this.ring(px, py, '#f5e3ab', 34, 0.55);
+      this.ring(vx, vy, '#8ee9f2', 84, 0.85);
+      this.flash('#8ee9f2', 0.16, 0.28);
+      this.shake(1.2, 0.24);
+      this.toast = 'ИДЕАЛЬНАЯ ТОЧКА';
+      this.toastTime = 1.3;
+    }
+
+    if (inp.dashPressed() && sk.dash.cd <= 0) {
+      var p = this.player;
+      sk.dash.cd = sk.dash.cdMax;
+      p.dash = 0.22;
+      p.dashSpeed = this.level.speed * (2.3 + this.curvature * 1.4);
+      p.vy *= 0.2;
+      this.audio.play('jump', 0.45);
+      this.burst(p.x + 5 * K, p.y + 8 * K, this.curvature > 0.5 ? '#8ee9f2' : '#f5e3ab', 14, {
+        speed: 1.6, size: 2, glow: true, gravity: 0, vx: -p.face * 0.8
+      });
+      this.ring(p.x + 5 * K, p.y + 8 * K, '#d9b15c', 22, 0.32);
+      this.toast = 'ГИПЕРБОЛИЧЕСКИЙ СДВИГ';
+      this.toastTime = 1.1;
+    }
+  };
+
   Game.prototype.updatePlay = function (dt) {
     var inp = this.input;
     if (inp.pausePressed()) { this.menuIndex = 0; this.audio.play('click', 0.3); this.setState('pause'); return; }
     if (inp.restartPressed()) { this.restartLevel(); return; }
-    if (inp.togglePressed()) {
+    this.updateSkills(dt);
+    if (inp.togglePressed() && this.skills.ideal.lock <= 0) {
       this.target = this.target ? 0 : 1;
       this.warp = 0.72;
       this.warpMax = 0.72;
@@ -525,8 +579,18 @@
     var dir = (inp.right() ? 1 : 0) - (inp.left() ? 1 : 0);
     if (dir) p.face = dir;
     var accel = p.onGround ? 0.3 : 0.14;
-    p.vx += (dir * lv.speed - p.vx) * accel;
-    if (!dir && p.onGround) p.vx *= 0.72;
+    if (p.dash > 0) {
+      p.dash -= dt;
+      p.vx = p.face * p.dashSpeed;
+      if (this.frameNo % 2 === 0) {
+        this.spark(p.x + 5 * K, p.y + 8 * K, this.curvature > 0.5 ? '#8ee9f2' : '#f5e3ab', {
+          speed: 0.4, size: 1, glow: true, gravity: 0, life: 0.25
+        });
+      }
+    } else {
+      p.vx += (dir * lv.speed - p.vx) * accel;
+      if (!dir && p.onGround) p.vx *= 0.72;
+    }
 
     if (inp.jumpPressed()) p.jumpBuf = 8;
     if (p.jumpBuf > 0) p.jumpBuf -= 1;
@@ -548,7 +612,7 @@
 
     var prevBottom = p.y + p.h;
     var prevX = p.x + p.w / 2;
-    p.vy += lv.gravity;
+    p.vy += p.dash > 0 ? lv.gravity * 0.12 : lv.gravity;
     if (p.vy > 6.5 * K) p.vy = 6.5 * K;
     p.x = clamp(p.x + p.vx, 0, lv.worldW - p.w);
     p.y += p.vy;

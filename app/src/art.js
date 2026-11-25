@@ -80,11 +80,14 @@
   
   A.vignette = function (ctx) {
     var u = A.U;
-    var g = ctx.createRadialGradient(240 * u, 132 * u, 88 * u, 240 * u, 132 * u, 292 * u);
-    g.addColorStop(0, 'rgba(20,14,8,0)');
-    g.addColorStop(0.72, 'rgba(20,14,8,0.07)');
-    g.addColorStop(1, 'rgba(14,9,5,0.32)');
-    ctx.fillStyle = g;
+    if (!A._vignette || A._vignette.ctx !== ctx) {
+      var g = ctx.createRadialGradient(240 * u, 132 * u, 88 * u, 240 * u, 132 * u, 292 * u);
+      g.addColorStop(0, 'rgba(20,14,8,0)');
+      g.addColorStop(0.72, 'rgba(20,14,8,0.07)');
+      g.addColorStop(1, 'rgba(14,9,5,0.32)');
+      A._vignette = { ctx: ctx, grad: g };
+    }
+    ctx.fillStyle = A._vignette.grad;
     ctx.fillRect(0, 0, 480 * u, 270 * u);
   };
 
@@ -337,6 +340,10 @@
 
   
   var bgImages = {};
+  A.preload = function () {
+    for (var name in (window.BG_DATA || {})) bgImage(name);
+  };
+
   function bgImage(name) {
     if (!(name in bgImages)) {
       var im = new Image();
@@ -403,10 +410,22 @@
       ctx.fillStyle = 'rgba(16,11,7,0.55)';
       ctx.fillRect(0.5, 2.4, len, thick + 2.2);
 
-      var grad = ctx.createLinearGradient(0, 0, 0, thick);
-      grad.addColorStop(0, top);
-      grad.addColorStop(0.22, base);
-      grad.addColorStop(1, dark);
+      var key = style + '|' + top + '|' + base + '|' + dark;
+      if (!A._platformGradients) A._platformGradients = [];
+      var grad = null;
+      for (var gi = 0; gi < A._platformGradients.length; gi++) {
+        if (A._platformGradients[gi].ctx === ctx && A._platformGradients[gi].key === key) {
+          grad = A._platformGradients[gi].grad;
+          break;
+        }
+      }
+      if (!grad) {
+        grad = ctx.createLinearGradient(0, 0, 0, thick);
+        grad.addColorStop(0, top);
+        grad.addColorStop(0.22, base);
+        grad.addColorStop(1, dark);
+        A._platformGradients.push({ ctx: ctx, key: key, grad: grad });
+      }
       ctx.fillStyle = grad;
       ctx.fillRect(0, 0, len, thick);
       ctx.strokeStyle = 'rgba(26,18,11,0.85)';

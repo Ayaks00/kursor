@@ -36,7 +36,11 @@
       completeStats: document.getElementById('complete-stats'),
       quizLevel: document.getElementById('quiz-level'),
       quizQuestion: document.getElementById('quiz-question'),
-      quizFeedback: document.getElementById('quiz-feedback')
+      quizFeedback: document.getElementById('quiz-feedback'),
+      skillIdeal: document.getElementById('skill-ideal'),
+      skillDash: document.getElementById('skill-dash'),
+      idealFill: document.getElementById('ideal-fill'),
+      dashFill: document.getElementById('dash-fill')
     };
     this.quizList = document.getElementById('quiz-list');
 
@@ -57,6 +61,14 @@
       else if (st === 'victory' && self.game.stateTime > 1.5) self.game.setState('menu');
     });
   }
+
+  UI.prototype.setText = function (el, value) {
+    if (el && el.__uiText !== value) { el.textContent = value; el.__uiText = value; }
+  };
+
+  UI.prototype.setWidth = function (el, value) {
+    if (el && el.__uiWidth !== value) { el.style.width = value; el.__uiWidth = value; }
+  };
 
   UI.prototype.resize = function () {
     var w = this.stage.clientWidth;
@@ -119,6 +131,7 @@
       var el = nodes[i];
       if (!el.dataset.ru) el.dataset.ru = el.textContent;
       el.textContent = KZ.t(el.dataset.ru);
+      el.__uiText = el.textContent;
     }
     for (var p = 0; p < this.pauseButtons.length; p++) {
       this.pauseButtons[p].textContent = KZ.t(this.pauseLabels[p]);
@@ -170,48 +183,58 @@
       this.buildQuizButtons(game);
       this.highlight(this.quizButtons, game.menuIndex);
       var quizLv = KZ.LEVELS[game.quizIndex];
-      this.el.quizLevel.textContent = KZ.t(quizLv.name);
-      this.el.quizQuestion.textContent = KZ.t(quizLv.quiz.question);
-      this.el.quizFeedback.textContent = game.quizAnswered ? KZ.t(game.quizCorrect ? 'ВЕРНО!' : 'НЕВЕРНО') : '';
+      this.setText(this.el.quizLevel, KZ.t(quizLv.name));
+      this.setText(this.el.quizQuestion, KZ.t(quizLv.quiz.question));
+      this.setText(this.el.quizFeedback, game.quizAnswered ? KZ.t(game.quizCorrect ? 'ВЕРНО!' : 'НЕВЕРНО') : '');
       this.el.quizFeedback.classList.toggle('active', game.quizAnswered);
       this.el.quizFeedback.classList.toggle('wrong', game.quizAnswered && !game.quizCorrect);
     }
 
     if (state === 'intro') {
       var lv = game.level;
-      this.el.introTitle.textContent = KZ.t('УРОВЕНЬ') + ' ' + lv.id + ' · ' + KZ.t(lv.name);
-      this.el.introSubtitle.textContent = KZ.t(lv.subtitle);
-      this.el.introFact.textContent = KZ.t(lv.fact);
-      this.el.introTask.textContent = KZ.t(lv.task);
+      this.setText(this.el.introTitle, KZ.t('УРОВЕНЬ') + ' ' + lv.id + ' · ' + KZ.t(lv.name));
+      this.setText(this.el.introSubtitle, KZ.t(lv.subtitle));
+      this.setText(this.el.introFact, KZ.t(lv.fact));
+      this.setText(this.el.introTask, KZ.t(lv.task));
     }
 
     if (hudOn) {
       var level = game.level;
       var taken = 0;
       for (var i = 0; i < game.items.length; i++) if (game.items[i].taken) taken++;
-      this.el.level.textContent = level.id + '. ' + level.name;
-      this.el.chakCount.textContent = taken;
-      this.el.chakTotal.textContent = '/ ' + game.items.length;
-      this.el.chakFill.style.width = (game.items.length ? Math.round(taken / game.items.length * 100) : 0) + '%';
-      this.el.curvLabel.textContent = KZ.t(game.target ? 'ЛОБАЧЕВСКИЙ' : 'ПЛОСКОСТЬ');
-      this.el.curvFill.style.width = Math.round(game.curvature * 100) + '%';
+      this.setText(this.el.level, level.id + '. ' + level.name);
+      this.setText(this.el.chakCount, String(taken));
+      this.setText(this.el.chakTotal, '/ ' + game.items.length);
+      this.setWidth(this.el.chakFill, (game.items.length ? Math.round(taken / game.items.length * 100) : 0) + '%');
+      this.setText(this.el.curvLabel, KZ.t(game.target ? 'ЛОБАЧЕВСКИЙ' : 'ПЛОСКОСТЬ'));
+      this.setWidth(this.el.curvFill, Math.round(game.curvature * 100) + '%');
       var boss = game.boss;
       this.el.bossBox.classList.toggle('active', !!boss && !boss.dead);
-      if (boss) this.el.bossFill.style.width = Math.max(0, boss.hp / (boss.maxHp || 10) * 100) + '%';
+      if (boss) this.setWidth(this.el.bossFill, Math.max(0, boss.hp / (boss.maxHp || 10) * 100) + '%');
+      var sk = game.skills;
+      if (sk) {
+        var idealReady = sk.ideal.cd <= 0 && sk.ideal.lock <= 0;
+        this.el.skillIdeal.classList.toggle('ready', idealReady);
+        this.el.skillIdeal.classList.toggle('locked', sk.ideal.lock > 0);
+        this.setWidth(this.el.idealFill, Math.round((sk.ideal.cd > 0 ? 1 - sk.ideal.cd / sk.ideal.cdMax : 1) * 100) + '%');
+        var dashReady = sk.dash.cd <= 0;
+        this.el.skillDash.classList.toggle('ready', dashReady);
+        this.setWidth(this.el.dashFill, Math.round((dashReady ? 1 : 1 - sk.dash.cd / sk.dash.cdMax) * 100) + '%');
+      }
       var showHint = state === 'play' && game.hintTime > 0 && !game.hintDismissed;
       this.el.hintBox.classList.toggle('active', showHint);
-      if (showHint) this.el.hintTask.textContent = KZ.t(level.task);
+      if (showHint) this.setText(this.el.hintTask, KZ.t(level.task));
     }
 
     if (state === 'complete') {
-      this.el.completeName.textContent = game.level.name;
-      this.el.completeTime.textContent = KZ.t('ВРЕМЯ: ') + game.timeInLevel.toFixed(1) + KZ.t(' с');
-      this.el.completeStats.textContent = KZ.t('ПЕРЕКЛЮЧЕНИЙ: ') + game.switches;
+      this.setText(this.el.completeName, game.level.name);
+      this.setText(this.el.completeTime, KZ.t('ВРЕМЯ: ') + game.timeInLevel.toFixed(1) + KZ.t(' с'));
+      this.setText(this.el.completeStats, KZ.t('ПЕРЕКЛЮЧЕНИЙ: ') + game.switches);
     }
 
     var showToast = game.toastTime > 0;
     this.toast.classList.toggle('active', showToast);
-    if (showToast) this.toast.textContent = KZ.t(game.toast || '');
+    if (showToast) this.setText(this.toast, KZ.t(game.toast || ''));
   };
 
   KZ.UI = UI;

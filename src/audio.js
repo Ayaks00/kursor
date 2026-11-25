@@ -4,18 +4,18 @@
 
   var THEMES = {
     menu: {
-      bpm: 96,
+      bpm: 84,
       lead: [0, 2, 4, 7, 8, 4, 2, 1],
       bass: [0, 0, 5, 5, 8, 8, 7, 7],
       wave: 'triangle',
-      gain: 0.055
+      gain: 0.052
     },
     game: {
-      bpm: 132,
+      bpm: 120,
       lead: [0, 4, 7, 4, 8, 7, 4, 2],
       bass: [0, 0, 7, 7, 5, 5, 8, 8],
-      wave: 'square',
-      gain: 0.038
+      wave: 'triangle',
+      gain: 0.036
     },
     boss: {
       bpm: 168,
@@ -25,11 +25,11 @@
       gain: 0.032
     },
     victory: {
-      bpm: 116,
+      bpm: 104,
       lead: [0, 4, 7, 12, 11, 7, 4, 0],
       bass: [0, 5, 7, 5, 0, 5, 7, 9],
       wave: 'triangle',
-      gain: 0.06
+      gain: 0.058
     }
   };
 
@@ -111,9 +111,9 @@
       var t = this.nextNote;
       this.tone(noteHz(th.lead[i]), t, stepDur * 0.85, th.wave, th.gain);
       if (i % 2 === 0) {
-        this.tone(noteHz(th.bass[i]) / 2, t, stepDur * 1.7, 'square', th.gain * 0.65);
+        this.tone(noteHz(th.bass[i]) / 2, t, stepDur * 2.2, 'sine', th.gain * 0.8);
       }
-      if (i === 3 || i === 7) {
+      if (i === 0 || i === 4) {
         this.noise(t, 0.035, th.gain * 0.35);
       }
       this.step++;

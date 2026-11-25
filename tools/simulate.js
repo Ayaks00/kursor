@@ -23,6 +23,7 @@ global.setInterval = () => 0;
 ['src/sfx-data.js','src/audio.js','src/input.js','src/art.js','src/levels.js','src/game.js']
   .forEach(f => vm.runInThisContext(fs.readFileSync(path.join(root,f),'utf8'), { filename:f }));
 
+const K = 4;
 const CURVE_ZONES = {
   0: [[600, 810], [1380, 1590]],
   1: [[540, 730], [1090, 1420], [1650, 1850]],
@@ -43,7 +44,7 @@ function run(levelIndex) {
     if (holdJump > 0) { input.down.Space = true; holdJump--; }
     if (game.state === 'death') { input.down = {}; }
     if (game.state === 'play') {
-      const zones = CURVE_ZONES[levelIndex] || [];
+      const zones = (CURVE_ZONES[levelIndex] || []).map(z => z.map(v => v * K));
       const wantCurve = zones.some(z => p.x > z[0] && p.x < z[1]);
       if ((wantCurve ? 1 : 0) !== game.target) {
         input.pressed.KeyQ = true;
@@ -51,7 +52,7 @@ function run(levelIndex) {
       }
       const plat = p.groundIdx >= 0 ? game.level.platforms[p.groundIdx] : null;
       const ends = plat ? game.platformEnds(plat) : null;
-      const edge = ends ? Math.max(ends[0][0], ends[1][0]) - 12 : 0;
+      const edge = ends ? Math.max(ends[0][0], ends[1][0]) - 12 * K : 0;
       if (p.onGround && (p.x > edge || stuck > 25)) {
         input.pressed.Space = true;
         input.down.Space = true;
@@ -63,7 +64,7 @@ function run(levelIndex) {
     game.update(1/60);
     input.endFrame();
     maxX = Math.max(maxX, game.player.x);
-    if (Math.abs(game.player.x - lastX) < 0.3) stuck++; else stuck = 0;
+    if (Math.abs(game.player.x - lastX) < 0.3 * K) stuck++; else stuck = 0;
     lastX = game.player.x;
     if (game.state === 'complete') return { levelIndex, ok: true, maxX, jumps, toggles, frames: frame };
   }
@@ -82,9 +83,9 @@ function bossTest() {
     const p = game.player, b = game.boss;
     b.fireTimer = 999; b.fireballs = [];
     input.down = {};
-    input.down.KeyD = p.x < b.x - 4;
-    input.down.KeyA = p.x > b.x + 4;
-    if (p.onGround && Math.abs(p.x + 5 - b.x) < 45 && hold === 0) {
+    input.down.KeyD = p.x < b.x - 4 * K;
+    input.down.KeyA = p.x > b.x + 4 * K;
+    if (p.onGround && Math.abs(p.x + 5 * K - b.x) < 45 * K && hold === 0) {
       input.pressed.Space = true; input.down.Space = true; hold = 16;
     }
     if (hold > 0) { input.down.Space = true; hold--; }

@@ -51,6 +51,7 @@
       items: [I(120, 192, 'chakchak'), I(250, 148), I(520, 188, 'chakchak'), I(690, 128), I(880, 170), I(1150, 126, 'chakchak'), I(1300, 150), I(1550, 90), I(1730, 180, 'chakchak')],
       checkpoints: [C(500, 215), C(1060, 190), C(1620, 210)],
       hazards: [S(390, 224, 34), O(1000, 150, 1000, 110, 1000, 176, 0.7), S(1480, 224, 46)],
+      lamps: [[170, 220], [560, 215], [890, 200], [1320, 180], [1760, 210]],
       goal: { x: 1890, y: 203 }
     },
     {
@@ -86,6 +87,7 @@
       items: [I(140, 190, 'chakchak'), I(480, 128), I(640, 158), I(820, 100), I(1000, 150), I(1180, 120), I(1350, 110, 'chakchak'), I(1550, 118), I(1750, 150), I(2010, 110), I(2130, 160, 'chakchak')],
       checkpoints: [C(400, 205), C(1120, 210), C(1890, 190)],
       hazards: [S(310, 224, 42), O(920, 150, 920, 100, 920, 170, 0.9), S(1820, 224, 30), O(2000, 190, 2000, 150, 2000, 205, 1.1)],
+      lamps: [[140, 220], [780, 182], [1520, 195], [1980, 190]],
       goal: { x: 2150, y: 183 }
     },
     {
@@ -120,6 +122,7 @@
       items: [I(150, 188, 'chakchak'), I(290, 128), I(520, 180), I(760, 140), I(950, 145, 'chakchak'), I(1160, 145), I(1450, 128), I(1700, 106, 'chakchak'), I(1900, 150), I(2130, 122), I(2330, 170, 'chakchak')],
       checkpoints: [C(430, 210), C(920, 175), C(1640, 180), C(2270, 200)],
       hazards: [S(350, 224, 44), O(620, 160, 620, 110, 620, 185, 0.8), O(1120, 140, 1060, 120, 1200, 160, 0.9), S(1830, 224, 34), O(2050, 130, 2000, 110, 2120, 150, 1.2)],
+      lamps: [[220, 220], [970, 175], [1700, 180], [2300, 200]],
       goal: { x: 2350, y: 193 }
     },
     {
@@ -147,9 +150,51 @@
       items: [I(140, 148, 'chakchak'), I(480, 118, 'chakchak'), I(820, 148, 'chakchak')],
       checkpoints: [],
       hazards: [],
+      lamps: [[120, 230], [380, 168], [700, 168], [900, 180]],
       goal: null
     }
   ];
 
-  KZ.LEVELS = levels;
+  /* Логические координаты совпадают с raster: 1920×1080.
+     Описания выше заданы в «дизайнерских» единицах (480×270) для читаемости,
+     здесь они один раз переводятся в настоящие игровые пиксели. */
+  var K = 4;
+  KZ.DESIGN_SCALE = K;
+
+  function pair(p) { return [p[0] * K, p[1] * K]; }
+  function point(p) { return { x: p.x * K, y: p.y * K }; }
+
+  function scaleLevel(lv) {
+    var out = Object.assign({}, lv);
+    out.worldW = lv.worldW * K;
+    out.spawn = [lv.spawn[0] * K, lv.spawn[1] * K];
+    out.vanish = { x: lv.vanish.x * K, y: lv.vanish.y * K };
+    out.gravity = lv.gravity * K;
+    out.jump = lv.jump * K;
+    out.speed = lv.speed * K;
+    out.guides = lv.guides.map(pair);
+    out.platforms = lv.platforms.map(function (p) {
+      return {
+        a: pair(p.a), b: pair(p.b), ca: pair(p.ca), cb: pair(p.cb),
+        kind: p.kind, style: p.style
+      };
+    });
+    out.items = lv.items.map(function (it) {
+      return { x: it.x * K, y: it.y * K, type: it.type };
+    });
+    out.checkpoints = lv.checkpoints.map(point);
+    out.hazards = lv.hazards.map(function (h) {
+      var z = Object.assign({}, h);
+      z.x *= K; z.y *= K;
+      if (z.w) z.w *= K;
+      if (z.r) z.r *= K;
+      if (z.ax !== undefined) { z.ax *= K; z.ay *= K; z.bx *= K; z.by *= K; }
+      return z;
+    });
+    out.goal = lv.goal ? point(lv.goal) : null;
+    out.lamps = (lv.lamps || []).map(pair);
+    return out;
+  }
+
+  KZ.LEVELS = levels.map(scaleLevel);
 })(window.KZ = window.KZ || {});

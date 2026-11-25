@@ -50,7 +50,7 @@ global.setInterval = () => 0;
 (async () => {
   // В браузере фон приходит из BG_DATA; здесь подставляем тот же PNG с диска.
   const bg = await loadImage(path.join(root, 'assets/bg/kfu-main.png'));
-  KZ.Art.backdrop = function (ctx) { ctx.drawImage(bg, 0, 0, 480, 270); };
+  KZ.Art.backdrop = function (ctx) { ctx.drawImage(bg, 0, 0, KZ.W, KZ.H); };
 
   const game = new KZ.Game(mainCanvas, new KZ.Input(mainCanvas), new KZ.AudioSystem());
 
@@ -67,16 +67,16 @@ global.setInterval = () => 0;
   shot('04-intro', g => g.loadLevel(0));
   shot('05-play', g => {
     g.setState('play');
-    g.player.x = 660; g.player.y = 195; g.player.onGround = true; g.player.groundIdx = 1;
+    g.player.x = 2640; g.player.y = 780; g.player.onGround = true; g.player.groundIdx = 1;
     g.curvature = 0; g.target = 0;
-    g.camX = 380;
+    g.camX = 1520;
   });
   shot('06-curved', g => {
     g.curvature = 1; g.target = 1; g.warp = 0;
-    g.player.x = 660; g.player.y = 190; g.camX = 380;
+    g.player.x = 2640; g.player.y = 760; g.camX = 1520;
   });
-  shot('07-level2', g => { g.loadLevel(1); g.setState('play'); g.player.x = 1180; g.camX = 1030; });
-  shot('08-observatory', g => { g.loadLevel(2); g.setState('play'); g.player.x = 1260; g.camX = 1100; g.curvature = 0.7; g.target = 1; });
-  shot('09-boss', g => { g.loadLevel(3); g.setState('play'); g.player.x = 430; g.camX = 230; g.curvature = 0.8; g.target = 1; });
+  shot('07-level2', g => { g.loadLevel(1); g.setState('play'); g.player.x = 4720; g.camX = 4120; });
+  shot('08-observatory', g => { g.loadLevel(2); g.setState('play'); g.player.x = 5040; g.camX = 4400; g.curvature = 0.7; g.target = 1; });
+  shot('09-boss', g => { g.loadLevel(3); g.setState('play'); g.player.x = 1720; g.camX = 920; g.curvature = 0.8; g.target = 1; });
   shot('10-victory', g => { g.setState('victory'); g.stateTime = 3; });
 })();

@@ -5,6 +5,9 @@
   'use strict';
 
   var A = {};
+  // Один «дизайнерский» пиксель старой сетки равен четырём настоящим пикселям
+  // логического мира 1920×1080. Внутри спрайтов это даёт место для мелких деталей.
+  A.U = 4;
   var C = {
     marble: '#e9dfc4', marbleDim: '#c8b998', marbleDark: '#9a8a6d',
     gold: '#d9b15c', goldLight: '#f5e3ab', goldDark: '#96703a',
@@ -17,6 +20,16 @@
   A.rect = function (ctx, x, y, w, h, c) {
     ctx.fillStyle = c;
     ctx.fillRect(Math.round(x), Math.round(y), Math.round(w), Math.round(h));
+  };
+
+  // Переводит координату центра объекта в логические пиксели, а внутренние
+  // размеры спрайта — в пиксели старой сетки (масштаб A.U).
+  A.at = function (ctx, x, y, draw) {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.scale(A.U, A.U);
+    draw(ctx);
+    ctx.restore();
   };
 
   // Ступенчатый пиксельный ореол: мягкий свет без размытия графики.
@@ -61,12 +74,13 @@
 
   // Статичное затемнение краёв — глубина кадра, не анимированный фон.
   A.vignette = function (ctx) {
-    var g = ctx.createRadialGradient(240, 132, 88, 240, 132, 292);
+    var u = A.U;
+    var g = ctx.createRadialGradient(240 * u, 132 * u, 88 * u, 240 * u, 132 * u, 292 * u);
     g.addColorStop(0, 'rgba(20,14,8,0)');
     g.addColorStop(0.72, 'rgba(20,14,8,0.07)');
     g.addColorStop(1, 'rgba(14,9,5,0.32)');
     ctx.fillStyle = g;
-    ctx.fillRect(0, 0, 480, 270);
+    ctx.fillRect(0, 0, 480 * u, 270 * u);
   };
 
   // Заголовки — античный засечный шрифт, мелкий HUD — моноширинный для читаемости.
@@ -332,187 +346,330 @@
   A.backdrop = function (ctx, level, camX, time) {
     var im = bgImage(level.bg);
     if (im && im.complete && (im.naturalWidth || im.width)) {
-      ctx.drawImage(im, 0, 0, 480, 270);
+      ctx.drawImage(im, 0, 0, 480 * A.U, 270 * A.U);
       return;
     }
-    // Пока картинка грузится (и в headless-инструментах) — процедурный запасной вариант.
+    // Пока картинка грузится — процедурный запасной вариант в старой сетке.
+    ctx.save();
+    ctx.scale(A.U, A.U);
     var pal = level.palette;
-    if (level.bg === 'main' || level.bg === 'kfu') A.kfu(ctx, camX, time, pal);
-    else if (level.bg === 'bauman') A.bauman(ctx, camX, time, pal);
-    else if (level.bg === 'observatory') A.observatory(ctx, camX, time, pal);
-    else A.kremlin(ctx, camX, time, pal);
+    if (level.bg === 'main' || level.bg === 'kfu') A.kfu(ctx, camX / A.U, time, pal);
+    else if (level.bg === 'bauman') A.bauman(ctx, camX / A.U, time, pal);
+    else if (level.bg === 'observatory') A.observatory(ctx, camX / A.U, time, pal);
+    else A.kremlin(ctx, camX / A.U, time, pal);
+    ctx.restore();
   };
 
   A.platform = function (ctx, a, b, style, alpha, phase) {
     ctx.save();
     ctx.globalAlpha = alpha;
-    var x1 = a[0], y1 = a[1], x2 = b[0], y2 = b[1];
-    var dx = x2 - x1, dy = y2 - y1;
-    var len = Math.sqrt(dx * dx + dy * dy) || 1;
-    var nx = -dy / len, ny = dx / len;
-    var thick = 6;
-    var base = style === 'wood' ? '#8a6a48' : style === 'metal' ? C.bronze : C.marbleDark;
-    var top = style === 'wood' ? '#b18a5c' : style === 'metal' ? '#d0ac64' : C.marble;
-    var dark = style === 'wood' ? '#5c432f' : style === 'metal' ? C.bronzeDark : '#786b52';
-    ctx.beginPath();
-    ctx.moveTo(x1, y1); ctx.lineTo(x2, y2);
-    ctx.lineTo(x2 + nx * thick, y2 + ny * thick);
-    ctx.lineTo(x1 + nx * thick, y1 + ny * thick);
-    ctx.closePath();
-    ctx.fillStyle = base; ctx.fill();
-    ctx.strokeStyle = top; ctx.lineWidth = 2;
-    ctx.beginPath(); ctx.moveTo(x1, y1 - 1); ctx.lineTo(x2, y2 - 1); ctx.stroke();
-    for (var d = 10; d < len; d += 14) {
-      var px = x1 + dx * (d / len) + nx * 3;
-      var py = y1 + dy * (d / len) + ny * 3;
-      A.rect(ctx, px, py, 1, 4, dark);
-    }
-    if (style === 'metal') A.ornament(ctx, x1 + 4, y1 + 2, Math.min(24, len - 8), C.goldLight, phase);
+    A.at(ctx, a[0], a[1], function (ctx) {
+      var x1 = 0, y1 = 0;
+      var x2 = (b[0] - a[0]) / A.U, y2 = (b[1] - a[1]) / A.U;
+      var dx = x2 - x1, dy = y2 - y1;
+      var len = Math.sqrt(dx * dx + dy * dy) || 1;
+      var nx = -dy / len, ny = dx / len;
+      var thick = 6;
+      var base = style === 'wood' ? '#8a6a48' : style === 'metal' ? '#916f40' : '#a29272';
+      var top = style === 'wood' ? '#c09a68' : style === 'metal' ? C.gold : C.marble;
+      var dark = style === 'wood' ? '#5c432f' : style === 'metal' ? C.bronzeDark : '#6f6049';
+      // Массивная плита: тень снизу, светлый верх, тонкая фаска по краю.
+      ctx.beginPath();
+      ctx.moveTo(x1, y1); ctx.lineTo(x2, y2);
+      ctx.lineTo(x2 + nx * thick, y2 + ny * thick);
+      ctx.lineTo(x1 + nx * thick, y1 + ny * thick);
+      ctx.closePath();
+      ctx.fillStyle = base; ctx.fill();
+      A.rect(ctx, x1 + nx * (thick - 1), y1 + ny * (thick - 1), len, 1, dark);
+      ctx.strokeStyle = top; ctx.lineWidth = 0.5;
+      ctx.beginPath(); ctx.moveTo(x1, y1 - 0.25); ctx.lineTo(x2, y2 - 0.25); ctx.stroke();
+      // Каменные швы / древесная текстура / бронзовые заклёпки.
+      for (var d = 7; d < len; d += 11) {
+        var px = x1 + dx * (d / len) + nx * 2.5;
+        var py = y1 + dy * (d / len) + ny * 2.5;
+        if (style === 'wood') {
+          A.rect(ctx, px, py, 4, 0.25, '#6d4c33');
+          A.rect(ctx, px + 1, py + 2, 3, 0.25, '#9d7850');
+        } else if (style === 'metal') {
+          A.rect(ctx, px, py, 1, 1, C.goldLight);
+          A.rect(ctx, px + 0.25, py + 0.25, 0.5, 0.5, C.bronzeDark);
+        } else {
+          A.rect(ctx, px, py, 0.5, 3, dark);
+          A.rect(ctx, px + 2, py + 1, 3, 0.5, '#c3b492');
+        }
+      }
+      if (style === 'metal' && len > 14) {
+        A.ornament(ctx, 3, 1.5, Math.min(26, len - 6), C.goldLight, phase);
+      }
+      if (style === 'stone' && len > 20) {
+        ctx.strokeStyle = 'rgba(245,227,171,0.35)';
+        ctx.beginPath();
+        ctx.moveTo(4, 1.5); ctx.lineTo(len - 4, 1.5);
+        ctx.stroke();
+      }
+    });
     ctx.restore();
   };
 
   A.player = function (ctx, p, time, curved) {
-    var x = Math.round(p.x), y = Math.round(p.y);
-    var run = p.onGround && Math.abs(p.vx) > 0.2 ? Math.sin(time * 14) : 0;
-    if (curved) A.halo(ctx, x + 5, y + 7, 11 + Math.sin(time * 5) * 2, C.gold, 0.34);
-    var chiton = curved ? C.gold : C.parchment;
-    var cloak = curved ? C.olive : C.terracotta;
-    // Плащ, хитон, сандалии, лавровый венок и свиток
-    A.rect(ctx, x - 1, y + 4, 12, 7, cloak);
-    A.rect(ctx, x + 1, y + 6, 8, 4, chiton);
-    A.rect(ctx, x - 3, y + 5, 3, 6, C.bronzeDark);
-    A.rect(ctx, x + (run > 0 ? 1 : 0), y + 11, 3, 3, C.ink);
-    A.rect(ctx, x + 6 - (run > 0 ? 1 : 0), y + 11, 3, 3, C.ink);
-    A.rect(ctx, x + 1, y, 9, 6, '#d9b58a');
-    A.rect(ctx, x + 0, y - 2, 11, 3, '#7e5b3e');
-    A.rect(ctx, x + 1, y - 3, 3, 2, C.olive);
-    A.rect(ctx, x + 6, y - 3, 3, 2, C.olive);
-    A.rect(ctx, x + 2, y + 2, 3, 1, C.ink);
-    A.rect(ctx, x + 6, y + 2, 3, 1, C.ink);
-    A.rect(ctx, x + 5, y + 2, 1, 2, '#a37d59');
-    if (curved) A.rect(ctx, x + 8, y - 1, 2, 2, C.goldLight);
+    A.at(ctx, p.x, p.y, function (ctx) {
+      var x = 0, y = 0;
+      var run = p.onGround && Math.abs(p.vx) > 0.2 * A.U ? Math.sin(time * 14) : 0;
+      var chiton = curved ? C.gold : C.parchment;
+      var cloak = curved ? C.olive : C.terracotta;
+      if (curved) A.halo(ctx, 5, 7, 11 + Math.sin(time * 5) * 2, C.gold, 0.34);
+      // Тень, развевающийся плащ, складки хитона и сандалии.
+      A.rect(ctx, x - 2, y + 14, 14, 1, 'rgba(30,22,14,0.35)');
+      A.rect(ctx, x - 2, y + 3, 3, 9, '#8c4f34');
+      A.rect(ctx, x - 1, y + 4, 12, 7, cloak);
+      A.rect(ctx, x - 2 + Math.sin(time * 6) * 1, y + 7, 3, 5, cloak);
+      A.rect(ctx, x + 1, y + 6, 8, 4, chiton);
+      A.rect(ctx, x + 2, y + 6, 0.4, 4, '#b9a782');
+      A.rect(ctx, x + 5, y + 6, 0.4, 4, '#b9a782');
+      A.rect(ctx, x - 3, y + 5, 3, 6, C.bronzeDark);
+      A.rect(ctx, x - 3, y + 5, 1, 6, C.goldDark);
+      A.rect(ctx, x + (run > 0 ? 1 : 0), y + 11, 3, 3, C.ink);
+      A.rect(ctx, x + 6 - (run > 0 ? 1 : 0), y + 11, 3, 3, C.ink);
+      A.rect(ctx, x + (run > 0 ? 1 : 0), y + 11, 3, 1, '#a88758');
+      A.rect(ctx, x + 6 - (run > 0 ? 1 : 0), y + 11, 3, 1, '#a88758');
+      // Лицо, волосы, глаз, лавровый венок с отдельными листиками.
+      A.rect(ctx, x + 1, y, 9, 6, '#d9b58a');
+      A.rect(ctx, x + 1, y + 4, 9, 2, '#c9a276');
+      A.rect(ctx, x + 0, y - 2, 11, 3, '#7e5b3e');
+      A.rect(ctx, x + 1, y - 3, 3, 2, C.olive);
+      A.rect(ctx, x + 6, y - 3, 3, 2, C.olive);
+      A.rect(ctx, x + 4, y - 4, 2, 1, '#98a469');
+      A.rect(ctx, x + 2, y + 2, 3, 1, C.ink);
+      A.rect(ctx, x + 6, y + 2, 3, 1, C.ink);
+      A.rect(ctx, x + 2, y + 2, 1, 0.5, C.parchment);
+      A.rect(ctx, x + 6, y + 2, 1, 0.5, C.parchment);
+      A.rect(ctx, x + 5, y + 2, 1, 2, '#a37d59');
+      // Свиток в руке: жёлтая печать видна и в плоском режиме.
+      A.rect(ctx, x + 8, y + 6, 3, 4, C.parchment);
+      A.rect(ctx, x + 8, y + 6, 3, 1, C.marble);
+      A.rect(ctx, x + 9, y + 8, 1, 1, C.gold);
+      if (curved) A.rect(ctx, x + 8, y - 1, 2, 2, C.goldLight);
+    });
   };
 
   A.pickup = function (ctx, item, time) {
-    var bob = Math.sin(time * 3 + item.x) * 2;
-    var x = Math.round(item.x), y = Math.round(item.y + bob);
+    var phase = item.x / A.U;
+    var bob = Math.sin(time * 3 + phase) * 2 * A.U;
     var shine = item.type === 'chakchak' ? '#ffce6a' : '#fff3c8';
-    A.halo(ctx, x, y, 10 + Math.sin(time * 4 + item.x) * 2, shine, 0.5);
-    if (item.type === 'chakchak') {
-      // амфора с чак-чаком
-      A.rect(ctx, x - 3, y - 3, 7, 6, C.terracotta);
-      A.rect(ctx, x - 4, y - 5, 9, 3, '#cf8053');
-      A.rect(ctx, x - 2, y - 6, 5, 2, C.terracotta);
-      A.rect(ctx, x - 4, y + 3, 9, 2, C.bronzeDark);
-      A.rect(ctx, x - 1, y - 1, 3, 3, C.goldLight);
-      A.rect(ctx, x - 5, y - 2, 2, 3, C.bronzeDark);
-      A.rect(ctx, x + 4, y - 2, 2, 3, C.bronzeDark);
-    } else {
-      // пергаментный свиток
-      A.rect(ctx, x - 3, y - 4, 7, 8, C.parchment);
-      A.rect(ctx, x - 4, y - 5, 9, 2, C.marble);
-      A.rect(ctx, x - 4, y + 3, 9, 2, C.marble);
-      A.rect(ctx, x - 1, y - 2, 1, 4, '#8a5a3c');
-      A.rect(ctx, x + 1, y - 2, 1, 4, '#8a5a3c');
-      A.rect(ctx, x - 1, y, 3, 1, '#8a5a3c');
-    }
+    A.at(ctx, item.x, item.y + bob, function (ctx) {
+      var x = 0, y = 0;
+      A.halo(ctx, x, y, 10 + Math.sin(time * 4 + phase) * 2, shine, 0.5);
+      if (item.type === 'chakchak') {
+        // Амфора с чак-чаком: ручки, роспись, гранёные кусочки халвы.
+        A.rect(ctx, x - 3, y - 3, 7, 6, C.terracotta);
+        A.rect(ctx, x - 2, y - 2, 5, 4, '#c97a4c');
+        A.rect(ctx, x - 4, y - 5, 9, 3, '#cf8053');
+        A.rect(ctx, x - 3, y - 5, 7, 1, '#e39a6a');
+        A.rect(ctx, x - 2, y - 6, 5, 2, C.terracotta);
+        A.rect(ctx, x - 4, y + 3, 9, 2, C.bronzeDark);
+        A.rect(ctx, x - 3, y + 4, 7, 1, C.goldDark);
+        A.rect(ctx, x - 1, y - 1, 3, 3, C.goldLight);
+        A.rect(ctx, x - 2, y - 1, 1, 1, '#fff3c8');
+        A.rect(ctx, x + 1, y + 1, 1, 1, '#ffce6a');
+        A.rect(ctx, x - 5, y - 2, 2, 3, C.bronzeDark);
+        A.rect(ctx, x + 4, y - 2, 2, 3, C.bronzeDark);
+        A.rect(ctx, x - 5, y - 1, 1, 1, C.gold);
+        A.rect(ctx, x + 4, y - 1, 1, 1, C.gold);
+      } else {
+        // Пергаментный свиток: скатки, строчки чернил, печать.
+        A.rect(ctx, x - 3, y - 4, 7, 8, C.parchment);
+        A.rect(ctx, x - 4, y - 5, 9, 2, C.marble);
+        A.rect(ctx, x - 4, y + 3, 9, 2, C.marble);
+        A.rect(ctx, x - 4, y - 4, 1, 7, '#c7b68d');
+        A.rect(ctx, x + 4, y - 4, 1, 7, '#c7b68d');
+        A.rect(ctx, x - 1, y - 2, 1, 4, '#8a5a3c');
+        A.rect(ctx, x + 1, y - 2, 1, 4, '#8a5a3c');
+        A.rect(ctx, x - 1, y, 3, 1, '#8a5a3c');
+        A.rect(ctx, x + 2, y + 2, 1, 1, C.gold);
+        for (var l = 0; l < 3; l++) A.rect(ctx, x - 2, y - 3 + l * 2, 4, 0.3, '#b09a70');
+      }
+    });
   };
 
   A.flag = function (ctx, cp, time) {
-    var x = Math.round(cp.x), y = Math.round(cp.y);
-    A.rect(ctx, x, y - 22, 2, 22, C.bronzeDark);
-    A.rect(ctx, x - 2, y - 22, 7, 2, C.gold);
-    var c = cp.active ? C.gold : '#9a8c6c';
-    A.rect(ctx, x + 2, y - 20, 13, 10, c);
-    A.ornament(ctx, x + 3, y - 18, 11, '#6b3f28', 0);
-    A.rect(ctx, x + 2, y - 10, 13, 2, C.goldDark);
-    if (cp.active) {
-      A.halo(ctx, x + 6, y - 15, 12 + Math.sin(time * 4) * 3, C.goldLight, 0.55);
-      ctx.globalAlpha = 0.3 + 0.2 * Math.sin(time * 5);
-      A.rect(ctx, x - 4, y - 24, 22, 16, C.goldLight);
-      ctx.globalAlpha = 1;
-    }
+    A.at(ctx, cp.x, cp.y, function (ctx) {
+      var x = 0, y = 0;
+      A.rect(ctx, x - 2, y - 1, 6, 2, C.bronzeDark);
+      A.rect(ctx, x, y - 22, 2, 22, C.bronzeDark);
+      A.rect(ctx, x + 0.5, y - 22, 0.5, 22, C.goldDark);
+      A.rect(ctx, x - 2, y - 22, 7, 2, C.gold);
+      A.rect(ctx, x - 1, y - 24, 5, 2, C.goldLight);
+      var c = cp.active ? C.gold : '#9a8c6c';
+      A.rect(ctx, x + 2, y - 20, 13, 10, c);
+      A.rect(ctx, x + 2, y - 20, 13, 1, cp.active ? C.goldLight : '#c2b394');
+      A.ornament(ctx, x + 3, y - 18, 11, '#6b3f28', 0);
+      A.rect(ctx, x + 2, y - 11, 13, 2, C.goldDark);
+      A.rect(ctx, x + 4, y - 9, 1, 2, C.bronze);
+      A.rect(ctx, x + 12, y - 9, 1, 2, C.bronze);
+      if (cp.active) {
+        A.halo(ctx, 6, -15, 12 + Math.sin(time * 4) * 3, C.goldLight, 0.55);
+        ctx.globalAlpha = 0.3 + 0.2 * Math.sin(time * 5);
+        A.rect(ctx, -4, -24, 22, 16, C.goldLight);
+        ctx.globalAlpha = 1;
+      }
+    });
   };
 
   A.spikes = function (ctx, h) {
-    var x = Math.round(h.x), y = Math.round(h.y);
-    // антические калтропы из бронзы
-    for (var i = 0; i < h.w; i += 7) {
-      for (var k = 0; k < 5; k++) {
-        A.rect(ctx, x + i + (4 - k) / 2, y + k, Math.max(1, k + 1), 1, k % 2 ? C.bronze : C.marbleDim);
+    A.at(ctx, h.x, h.y, function (ctx) {
+      var x = 0, y = 0;
+      var w = h.w / A.U;
+      A.rect(ctx, x, y + 5, w, 2, C.bronzeDark);
+      A.rect(ctx, x, y + 5, w, 0.5, C.goldDark);
+      for (var i = 0; i < w; i += 7) {
+        for (var k = 0; k < 5; k++) {
+          A.rect(ctx, x + i + (4 - k) / 2, y + k, Math.max(1, k + 1), 1, k % 2 ? C.bronze : C.marbleDim);
+          A.rect(ctx, x + i + (4 - k) / 2, y + k, 0.5, 1, C.goldLight);
+        }
+        A.rect(ctx, x + i + 1, y + 6, 5, 1, '#5c4a30');
       }
-    }
-    A.rect(ctx, x, y + 5, h.w, 2, C.bronzeDark);
+    });
   };
 
   A.orb = function (ctx, o, time) {
-    var x = Math.round(o.x), y = Math.round(o.y);
-    var r = o.r || 7;
-    ctx.globalAlpha = 0.22;
-    A.rect(ctx, x - r - 3, y - r - 3, r * 2 + 6, r * 2 + 6, '#d9b15c');
-    ctx.globalAlpha = 1;
-    A.rect(ctx, x - r, y - r + 2, r * 2, r * 2 - 4, '#4a3a2b');
-    A.rect(ctx, x - r + 2, y - r, r * 2 - 4, r * 2, '#4a3a2b');
-    A.rect(ctx, x - r + 3, y - r + 2, 3, 3, C.goldLight);
-    A.rect(ctx, x + r - 5, y + r - 6, 2, 2, C.gold);
+    A.at(ctx, o.x, o.y, function (ctx) {
+      var x = 0, y = 0;
+      var r = (o.r || 7 * A.U) / A.U;
+      var pulse = Math.sin(time * 5) * 0.5;
+      A.halo(ctx, 0, 0, r + 4 + pulse, '#d9b15c', 0.35);
+      ctx.globalAlpha = 0.22;
+      A.rect(ctx, -r - 3, -r - 3, r * 2 + 6, r * 2 + 6, '#d9b15c');
+      ctx.globalAlpha = 1;
+      A.rect(ctx, -r, -r + 2, r * 2, r * 2 - 4, '#4a3a2b');
+      A.rect(ctx, -r + 2, -r, r * 2 - 4, r * 2, '#4a3a2b');
+      // Бронзовая арматура и грани чёрного камня.
+      A.rect(ctx, -r + 3, -r + 2, 3, 3, C.goldLight);
+      A.rect(ctx, r - 5, r - 6, 2, 2, C.gold);
+      A.rect(ctx, -r - 1, -1, 3, 2, C.goldDark);
+      A.rect(ctx, r - 2, -1, 3, 2, C.goldDark);
+      A.rect(ctx, -1, -r - 1, 2, 3, C.goldDark);
+      A.rect(ctx, -1, r - 2, 2, 3, C.goldDark);
+      A.rect(ctx, -2, -2, 3, 3, '#2c2620');
+      A.rect(ctx, -1, -1, 1, 1, C.goldLight);
+    });
   };
 
   A.door = function (ctx, d, time, active) {
-    var x = Math.round(d.x), y = Math.round(d.y);
-    A.rect(ctx, x - 4, y - 4, 24, 3, C.marble);
-    A.column(ctx, x - 4, y, 32, C.marbleDim);
-    A.column(ctx, x + 18, y, 32, C.marbleDim);
-    A.rect(ctx, x - 3, y - 8, 22, 4, C.marble);
-    A.ornament(ctx, x - 1, y - 7, 18, C.goldDark, 0);
-    if (active) A.halo(ctx, x + 8, y + 15, 14 + Math.sin(time * 3) * 2, '#f5e3ab', 0.55);
-    A.rect(ctx, x, y, 16, 30, active ? '#e8c46c' : '#5b4b38');
-    A.rect(ctx, x + 3, y + 3, 10, 24, active ? C.goldLight : '#776449');
-    A.rect(ctx, x + 5, y + 15, 6, 2, '#6c4a24');
-    A.rect(ctx, x + 7, y + 12, 2, 8, '#6c4a24');
+    A.at(ctx, d.x, d.y, function (ctx) {
+      var x = 0, y = 0;
+      A.rect(ctx, -6, y + 30, 28, 2, 'rgba(30,22,14,0.4)');
+      A.rect(ctx, -4, -4, 24, 3, C.marble);
+      A.column(ctx, -4, 0, 32, C.marbleDim);
+      A.column(ctx, 18, 0, 32, C.marbleDim);
+      A.rect(ctx, -3, -8, 22, 4, C.marble);
+      A.pediment(ctx, -1, -14, 18, C.marble);
+      A.ornament(ctx, -1, -7, 18, C.goldDark, 0);
+      A.rect(ctx, -2, 1, 1, 30, '#f5ecd4');
+      A.rect(ctx, 18, 1, 1, 30, '#f5ecd4');
+      if (active) A.halo(ctx, 8, 15, 14 + Math.sin(time * 3) * 2, '#f5e3ab', 0.55);
+      A.rect(ctx, 0, 0, 16, 30, active ? '#e8c46c' : '#5b4b38');
+      A.rect(ctx, 3, 3, 10, 24, active ? C.goldLight : '#776449');
+      A.rect(ctx, 4, 3, 0.5, 24, '#fff8dd');
+      A.rect(ctx, 5, 15, 6, 2, '#6c4a24');
+      A.rect(ctx, 7, 12, 2, 8, '#6c4a24');
+      A.rect(ctx, 13, 16, 1, 2, C.gold);
+      A.rect(ctx, 2, 27, 12, 1, C.goldDark);
+    });
   };
 
   A.dragon = function (ctx, b, time) {
-    var x = Math.round(b.x), y = Math.round(b.y);
-    var flap = Math.sin(time * 8) * 5;
-    A.halo(ctx, x, y, 26 + Math.sin(time * 3) * 4, b.flash > 0 ? '#ffffff' : '#e3c57d', 0.4);
-    // бронзовая чешуя, кожаные крылья, золотой гребень
-    A.rect(ctx, x - 26, y - 12 + flap, 18, 8, '#6e5a3d');
-    A.rect(ctx, x + 8, y - 12 - flap, 18, 8, '#6e5a3d');
-    A.rect(ctx, x - 14, y - 8, 28, 17, '#6f8b5e');
-    A.rect(ctx, x + 12, y - 10, 13, 12, '#7fa06b');
-    A.rect(ctx, x + 23, y - 6, 6, 5, '#92b27a');
-    A.rect(ctx, x + 10, y - 15, 4, 6, C.goldLight);
-    A.rect(ctx, x + 18, y - 15, 4, 6, C.goldLight);
-    A.rect(ctx, x + 17, y - 7, 3, 3, b.flash > 0 ? '#ffffff' : C.goldLight);
-    A.rect(ctx, x + 24, y - 3, 2, 2, C.ink);
-    A.rect(ctx, x - 6, y + 9, 5, 9, '#567049');
-    A.rect(ctx, x + 5, y + 9, 5, 9, '#567049');
-    for (var i = 0; i < 4; i++) A.rect(ctx, x - 10 + i * 6, y - 2, 2, 2, C.gold);
+    A.at(ctx, b.x, b.y, function (ctx) {
+      var x = 0, y = 0;
+      var flap = Math.sin(time * 8) * 5;
+      A.halo(ctx, 0, 0, 26 + Math.sin(time * 3) * 4, b.flash > 0 ? '#ffffff' : '#e3c57d', 0.4);
+      // Кожаные крылья с рёбрами, бронзовая чешуя, золотой гребень и рога.
+      A.rect(ctx, -26, -12 + flap, 18, 8, '#6e5a3d');
+      A.rect(ctx, -24, -10 + flap, 14, 1, '#a28859');
+      A.rect(ctx, -22, -8 + flap, 12, 1, '#a28859');
+      A.rect(ctx, -20, -6 + flap, 10, 1, '#a28859');
+      A.rect(ctx, 8, -12 - flap, 18, 8, '#6e5a3d');
+      A.rect(ctx, 10, -10 - flap, 14, 1, '#a28859');
+      A.rect(ctx, 12, -8 - flap, 12, 1, '#a28859');
+      A.rect(ctx, 14, -6 - flap, 10, 1, '#a28859');
+      A.rect(ctx, -16, -4, 6, 5, '#5d7550');
+      A.rect(ctx, -14, -10, 28, 17, '#6f8b5e');
+      A.rect(ctx, -12, -8, 24, 13, '#7d9869');
+      A.rect(ctx, 12, -10, 13, 12, '#7fa06b');
+      A.rect(ctx, 23, -6, 6, 5, '#92b27a');
+      A.rect(ctx, 28, -5, 3, 3, '#9db884');
+      A.rect(ctx, 10, -15, 4, 6, C.goldLight);
+      A.rect(ctx, 18, -15, 4, 6, C.goldLight);
+      A.rect(ctx, 11, -17, 2, 3, C.gold);
+      A.rect(ctx, 19, -17, 2, 3, C.gold);
+      A.rect(ctx, 17, -7, 3, 3, b.flash > 0 ? '#ffffff' : C.goldLight);
+      A.rect(ctx, 18, -6, 1, 1, C.ink);
+      A.rect(ctx, 24, -3, 2, 2, C.ink);
+      A.rect(ctx, 26, 0, 4, 1, C.parchment);
+      A.rect(ctx, -6, 9, 5, 9, '#567049');
+      A.rect(ctx, 5, 9, 5, 9, '#567049');
+      A.rect(ctx, -5, 16, 7, 2, '#3f563a');
+      A.rect(ctx, 6, 16, 7, 2, '#3f563a');
+      for (var i = 0; i < 4; i++) {
+        A.rect(ctx, -10 + i * 6, -2, 2, 2, C.gold);
+        A.rect(ctx, -9 + i * 6, 3, 2, 2, '#a8bd7c');
+      }
+    });
   };
 
   A.fireball = function (ctx, f, time) {
-    var x = Math.round(f.x), y = Math.round(f.y);
-    A.halo(ctx, x, y, 8, '#d97846', 0.6);
-    A.rect(ctx, x - 3, y - 3, 6, 6, C.terracotta);
-    A.rect(ctx, x - 2, y - 4, 4, 8, C.gold);
-    A.rect(ctx, x - 1, y - 1, 2, 2, C.goldLight);
-    if (((time * 20) | 0) % 2) A.rect(ctx, x - 6, y + 2, 3, 2, '#8a4a2b');
+    A.at(ctx, f.x, f.y, function (ctx) {
+      var x = 0, y = 0;
+      A.halo(ctx, 0, 0, 8, '#d97846', 0.6);
+      A.rect(ctx, -4, -2, 3, 4, '#8a4a2b');
+      A.rect(ctx, -3, -3, 6, 6, C.terracotta);
+      A.rect(ctx, -2, -4, 4, 8, C.gold);
+      A.rect(ctx, -1, -1, 2, 2, C.goldLight);
+      A.rect(ctx, -1, -3, 1, 1, '#fff3c8');
+      if (((time * 20) | 0) % 2) {
+        A.rect(ctx, -6, 2, 3, 2, '#8a4a2b');
+        A.rect(ctx, 3, -3, 2, 2, C.gold);
+      }
+    });
   };
 
   A.idealPoint = function (ctx, p, time, strength) {
-    var x = Math.round(p.x), y = Math.round(p.y);
-    var r = 5 + Math.sin(time * 4) * 2 + strength * 5;
-    A.halo(ctx, x, y, r + 8, C.goldLight, 0.22 + strength * 0.35);
-    ctx.strokeStyle = 'rgba(245,227,171,' + (0.28 + strength * 0.5) + ')';
-    ctx.lineWidth = 1;
-    ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.stroke();
-    ctx.beginPath(); ctx.arc(x, y, r + 5, 0, Math.PI * 2); ctx.stroke();
-    for (var k = 0; k < 8; k++) {
-      var a = k * Math.PI / 4;
-      A.rect(ctx, x + Math.cos(a) * (r + 8), y + Math.sin(a) * (r + 8), 2, 2, C.goldLight);
-    }
-    A.rect(ctx, x - 1, y - 1, 3, 3, C.goldLight);
-    A.rect(ctx, x + 10, y - 4, 26, 1, C.goldLight);
+    A.at(ctx, p.x, p.y, function (ctx) {
+      var x = 0, y = 0;
+      var r = 5 + Math.sin(time * 4) * 2 + strength * 5;
+      A.halo(ctx, 0, 0, r + 8, C.goldLight, 0.22 + strength * 0.35);
+      ctx.strokeStyle = 'rgba(245,227,171,' + (0.28 + strength * 0.5) + ')';
+      ctx.lineWidth = 0.5;
+      ctx.beginPath(); ctx.arc(0, 0, r, 0, Math.PI * 2); ctx.stroke();
+      ctx.beginPath(); ctx.arc(0, 0, r + 5, 0, Math.PI * 2); ctx.stroke();
+      for (var k = 0; k < 8; k++) {
+        var a = k * Math.PI / 4;
+        A.rect(ctx, Math.cos(a) * (r + 8), Math.sin(a) * (r + 8), 1, 1, C.goldLight);
+      }
+      A.rect(ctx, -1, -1, 3, 3, C.goldLight);
+      A.rect(ctx, -0.25, -0.25, 0.5, 0.5, '#ffffff');
+      A.rect(ctx, 10, -4, 26, 0.5, C.goldLight);
+    });
+  };
+
+  // Уличный бронзовый фонарь: тёплый свет и мелкие детали на каждом объекте.
+  A.lantern = function (ctx, x, y, time) {
+    A.at(ctx, x, y, function (ctx) {
+      var gx = 0, gy = -20;
+      var flicker = Math.sin(time * 7 + x / A.U) * 1.2;
+      A.rect(ctx, -3, -1, 7, 2, '#5c4a30');
+      A.rect(ctx, -1, -20, 2, 20, C.bronzeDark);
+      A.rect(ctx, -0.5, -20, 0.5, 20, C.goldDark);
+      A.rect(ctx, -3, -22, 7, 2, C.bronze);
+      A.rect(ctx, -2, -27, 5, 5, '#3a2d20');
+      A.rect(ctx, -1, -26, 3, 3, '#ffce6a');
+      A.rect(ctx, 0, -25 + flicker * 0.2, 1, 2, C.goldLight);
+      A.rect(ctx, -3, -28, 7, 2, C.bronzeDark);
+      A.rect(ctx, -2, -29, 5, 1, C.gold);
+      A.rect(ctx, -1, -30, 3, 1, '#7a6038');
+      A.rect(ctx, 3, -24, 1, 2, C.bronzeDark);
+      A.halo(ctx, gx, gy - 5, 14 + flicker, '#ffce6a', 0.5);
+      A.halo(ctx, gx, gy - 5, 7 + flicker * 0.5, '#fff3c8', 0.35);
+    });
   };
 
   A.convergenceGuides = function (ctx, level, strength, phase) {
@@ -520,9 +677,9 @@
     ctx.save();
     ctx.globalAlpha = Math.min(1, strength) * 0.72;
     ctx.strokeStyle = C.gold;
-    ctx.lineWidth = 1;
-    ctx.setLineDash([5, 4]);
-    ctx.lineDashOffset = -(phase * 8) % 8;
+    ctx.lineWidth = A.U * 0.35;
+    ctx.setLineDash([5 * A.U, 4 * A.U]);
+    ctx.lineDashOffset = -(phase * 8 * A.U) % (8 * A.U);
     for (var i = 0; i < level.guides.length; i++) {
       var g = level.guides[i];
       ctx.beginPath();

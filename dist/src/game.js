@@ -2,7 +2,10 @@
 (function (KZ) {
   'use strict';
 
-  var W = 480, H = 270, SCALE = 4;
+  // Логические координаты = физический raster: 1920×1080, без виртуального масштаба.
+  // K — размер одного пикселя старой «дизайнерской» сетки внутри спрайтов.
+  var K = 4;
+  var W = 480 * K, H = 270 * K, SCALE = 1;
   var A = KZ.Art;
   var SAVE_KEY = 'kz_lobachevsky_save_v1';
 
@@ -12,8 +15,8 @@
   function Game(canvas, input, audio) {
     this.canvas = canvas;
     this.scale = SCALE;
-    // Логические координаты остаются 480×270, но реальный raster — 1920×1080:
-    // в 16 раз больше физических пикселей, чем в первой версии, и в 4 раза больше, чем было.
+    // Игровой мир живёт в настоящих пикселях 1920×1080: уровни, физика и эффекты
+    // используют те же координаты, что и canvas. Детали спрайтов рисуются с шагом K.
     if (canvas.width !== W * SCALE) canvas.width = W * SCALE;
     if (canvas.height !== H * SCALE) canvas.height = H * SCALE;
     this.ctx = canvas.getContext('2d');
@@ -47,7 +50,7 @@
     this.flashAlpha = 0; this.flashColor = '#e3c57d';
     this.frameNo = 0;
     this.hintTime = 0;
-    this.player = { x: 0, y: 0, vx: 0, vy: 0, w: 10, h: 14, onGround: false, groundIdx: -1, coyote: 0, jumpBuf: 0, face: 1 };
+    this.player = { x: 0, y: 0, vx: 0, vy: 0, w: 10 * K, h: 14 * K, onGround: false, groundIdx: -1, coyote: 0, jumpBuf: 0, face: 1 };
     this.save = this.loadSave();
     this.result = null;
     this.victoryShown = false;
@@ -97,7 +100,7 @@
     this.resetPlayer();
     this.camX = 0;
     if (lv.boss) {
-      this.boss = { x: 480, y: 118, hp: 3, flash: 0, fireTimer: 1.6, hitCooldown: 0, dead: false, fireballs: [] };
+      this.boss = { x: 480 * K, y: 118 * K, hp: 3, flash: 0, fireTimer: 1.6, hitCooldown: 0, dead: false, fireballs: [] };
     } else {
       this.boss = null;
     }
@@ -122,8 +125,8 @@
     if (this.state !== 'play') return;
     this.deaths++;
     this.audio.play('fall', 0.7);
-    this.burst(this.player.x + 5, this.player.y + 7, '#c45646', 16, { speed: 2.1, glow: true });
-    this.ring(this.player.x + 5, this.player.y + 7, '#c45646', 26, 0.5);
+    this.burst(this.player.x + 5 * K, this.player.y + 7 * K, '#c45646', 16, { speed: 2.1, glow: true });
+    this.ring(this.player.x + 5 * K, this.player.y + 7 * K, '#c45646', 26, 0.5);
     this.shake(2.2, 0.35);
     this.flash('#7e2a26', 0.3, 0.22);
     this.setState('death');
@@ -144,17 +147,17 @@
   Game.prototype.spark = function (x, y, color, opt) {
     opt = opt || {};
     if (this.particles.length > 420) return;
-    var speed = opt.speed === undefined ? 1.6 : opt.speed;
+    var speed = (opt.speed === undefined ? 1.6 : opt.speed) * K;
     var life = opt.life === undefined ? 0.4 + Math.random() * 0.5 : opt.life;
     this.particles.push({
       x: x, y: y,
-      vx: (Math.random() * 2 - 1) * speed + (opt.vx || 0),
-      vy: (Math.random() * 2 - 1.3) * speed + (opt.vy || 0),
+      vx: (Math.random() * 2 - 1) * speed + (opt.vx || 0) * K,
+      vy: (Math.random() * 2 - 1.3) * speed + (opt.vy || 0) * K,
       life: life,
       maxLife: life,
       color: color,
-      size: opt.size || 2,
-      gravity: opt.gravity === undefined ? 0.06 : opt.gravity,
+      size: (opt.size || 2) * K,
+      gravity: (opt.gravity === undefined ? 0.06 : opt.gravity) * K,
       glow: !!opt.glow,
       screen: !!opt.screen
     });
@@ -167,11 +170,11 @@
   // Расширяющееся кольцо — ударная волна при переключении геометрии, сборе и ударе.
   Game.prototype.ring = function (x, y, color, maxR, life, screen) {
     if (this.effects.length > 40) return;
-    this.effects.push({ x: x, y: y, color: color, r: 1, maxR: maxR, life: life, maxLife: life, screen: !!screen });
+    this.effects.push({ x: x, y: y, color: color, r: 1, maxR: maxR * K, life: life, maxLife: life, screen: !!screen });
   };
 
   Game.prototype.shake = function (mag, time) {
-    this.shakeMag = Math.max(this.shakeMag, mag);
+    this.shakeMag = Math.max(this.shakeMag, mag * K);
     this.shakeTime = Math.max(this.shakeTime, time);
   };
 
@@ -338,8 +341,8 @@
       this.warp = 0.5;
       this.switches++;
       this.audio.play('toggle', 0.5);
-      this.burst(this.player.x + 5, this.player.y + 6, '#e3c57d', 10, { speed: 2, glow: true });
-      this.ring(this.player.x + 5, this.player.y + 6, '#f5e3ab', 28, 0.55);
+      this.burst(this.player.x + 5 * K, this.player.y + 6 * K, '#e3c57d', 10, { speed: 2, glow: true });
+      this.ring(this.player.x + 5 * K, this.player.y + 6 * K, '#f5e3ab', 28, 0.55);
       this.ring(this.level.vanish.x, this.level.vanish.y, '#e3c57d', 34, 0.7);
       this.flash('#e3c57d', 0.12, 0.28);
       this.shake(0.9, 0.22);
@@ -367,8 +370,8 @@
       p.jumpBuf = 0;
       p.jumpHeld = true;
       this.audio.play('jump', 0.55);
-      this.burst(p.x + 5, p.y + 14, this.target ? '#e3c57d' : '#e6c47a', 6, { speed: 1.2, size: 1, gravity: 0.09 });
-      this.ring(p.x + 5, p.y + 14, '#d9b15c', 9, 0.28);
+      this.burst(p.x + 5 * K, p.y + 14 * K, this.target ? '#e3c57d' : '#e6c47a', 6, { speed: 1.2, size: 1, gravity: 0.09 });
+      this.ring(p.x + 5 * K, p.y + 14 * K, '#d9b15c', 9, 0.28);
     }
     if (!inp.jumpDown() && p.jumpHeld && p.vy < -2) { p.vy *= 0.55; p.jumpHeld = false; }
 
@@ -378,13 +381,13 @@
     var prevBottom = p.y + p.h;
     var prevX = p.x + p.w / 2;
     p.vy += lv.gravity;
-    if (p.vy > 6.5) p.vy = 6.5;
+    if (p.vy > 6.5 * K) p.vy = 6.5 * K;
     p.x = clamp(p.x + p.vx, 0, lv.worldW - p.w);
     p.y += p.vy;
 
     // Короткий шлейф за героем: заметен при беге и в кривой геометрии.
     if (!p.trail) p.trail = [];
-    if (this.frameNo % 2 === 0 && Math.abs(p.vx) > 0.5) {
+    if (this.frameNo % 2 === 0 && Math.abs(p.vx) > 0.5 * K) {
       p.trail.push({ x: p.x, y: p.y });
       if (p.trail.length > 5) p.trail.shift();
     }
@@ -401,15 +404,15 @@
       endsCache[i] = this.platformEnds(plat);
       if (!this.platformSolid(plat)) continue;
       var ends = endsCache[i];
-      var minX = Math.min(ends[0][0], ends[1][0]) - 2;
-      var maxX = Math.max(ends[0][0], ends[1][0]) + 2;
+      var minX = Math.min(ends[0][0], ends[1][0]) - 2 * K;
+      var maxX = Math.max(ends[0][0], ends[1][0]) + 2 * K;
       var cx = p.x + p.w / 2;
       if (cx < minX || cx > maxX) continue;
       var syPrev = this.surfaceY(ends, prevX);
       var syNow = this.surfaceY(ends, cx);
       var bottom = p.y + p.h;
-      var crossing = p.vy >= 0 && prevBottom <= syPrev + 4 && bottom >= syNow;
-      var sliding = wasGround && oldIdx === i && Math.abs(bottom - syNow) < 10 && bottom >= syNow - 3;
+      var crossing = p.vy >= 0 && prevBottom <= syPrev + 4 * K && bottom >= syNow;
+      var sliding = wasGround && oldIdx === i && Math.abs(bottom - syNow) < 10 * K && bottom >= syNow - 3 * K;
       if ((crossing || sliding) && syNow < bestY) { bestY = syNow; bestIdx = i; }
     }
     if (bestIdx >= 0) {
@@ -419,21 +422,21 @@
       p.onGround = true;
       p.groundIdx = bestIdx;
       p.coyote = 5;
-      if (!wasGround && impact > 1.7) {
-        this.audio.play('land', Math.min(0.5, 0.2 + impact * 0.05));
-        this.burst(p.x + 5, bestY, '#c8b998', impact > 4 ? 8 : 4, { speed: 1, size: 1, gravity: 0.08 });
-        this.ring(p.x + 5, bestY, '#e9dfc4', 11, 0.25);
-        if (impact > 4) this.shake(0.5, 0.12);
+      if (!wasGround && impact > 1.7 * K) {
+        this.audio.play('land', Math.min(0.5, 0.2 + impact / K * 0.05));
+        this.burst(p.x + 5 * K, bestY, '#c8b998', impact > 4 * K ? 8 : 4, { speed: 1, size: 1, gravity: 0.08 });
+        this.ring(p.x + 5 * K, bestY, '#e9dfc4', 11, 0.25);
+        if (impact > 4 * K) this.shake(0.5, 0.12);
       }
     }
 
-    if (p.y > 290) { this.die(); return; }
+    if (p.y > 290 * K) { this.die(); return; }
 
     // предметы
     for (var q = 0; q < this.items.length; q++) {
       var it = this.items[q];
       if (it.taken) continue;
-      if (Math.abs(p.x + 5 - it.x) < 9 && Math.abs(p.y + 7 - it.y) < 10) {
+      if (Math.abs(p.x + 5 * K - it.x) < 9 * K && Math.abs(p.y + 7 * K - it.y) < 10 * K) {
         it.taken = true;
         this.audio.play('coin', 0.5);
         var sparkle = it.type === 'chakchak' ? '#ffce6a' : '#fff3c8';
@@ -445,7 +448,7 @@
     // чекпоинты
     for (var c = 0; c < this.checkpoints.length; c++) {
       var cp = this.checkpoints[c];
-      if (!cp.active && Math.abs(p.x + 5 - cp.x) < 10 && Math.abs(p.y + 7 - cp.y) < 14) {
+      if (!cp.active && Math.abs(p.x + 5 * K - cp.x) < 10 * K && Math.abs(p.y + 7 * K - cp.y) < 14 * K) {
         cp.active = true;
         this.respawn = { x: cp.x - 5, y: cp.y - 16 };
         this.audio.play('checkpoint', 0.55);
@@ -460,7 +463,7 @@
     var hx, hy, hw = 0, hh = 0;
     for (var h = 0; h < this.hazards.length; h++) {
       var hz = this.hazards[h];
-      if (hz.type === 'spikes') { hx = hz.x; hy = hz.y; hw = hz.w; hh = 7; }
+      if (hz.type === 'spikes') { hx = hz.x; hy = hz.y; hw = hz.w; hh = 7 * K; }
       else {
         var ph = this.time * hz.speed;
         hz.x = lerp(hz.ax, hz.bx, (Math.sin(ph) + 1) / 2);
@@ -471,11 +474,11 @@
     }
 
     if (this.boss) this.updateBoss(dt);
-    else if (this.level.goal && Math.abs(p.x + 5 - this.level.goal.x) < 12 &&
-             Math.abs(p.y + 7 - this.level.goal.y) < 20) {
+    else if (this.level.goal && Math.abs(p.x + 5 * K - this.level.goal.x) < 12 * K &&
+             Math.abs(p.y + 7 * K - this.level.goal.y) < 20 * K) {
       this.audio.play('win', 0.55);
-      this.burst(this.level.goal.x + 8, this.level.goal.y + 12, '#f5e3ab', 26, { speed: 2.4, size: 2, glow: true, gravity: -0.02 });
-      this.ring(this.level.goal.x + 8, this.level.goal.y + 12, '#d9b15c', 36, 0.8);
+      this.burst(this.level.goal.x + 8 * K, this.level.goal.y + 12 * K, '#f5e3ab', 26, { speed: 2.4, size: 2, glow: true, gravity: -0.02 });
+      this.ring(this.level.goal.x + 8 * K, this.level.goal.y + 12 * K, '#d9b15c', 36, 0.8);
       this.flash('#f5e3ab', 0.16, 0.3);
       this.setState('complete');
     }
@@ -489,8 +492,8 @@
       if (this.stateTime > 2.4) this.setState('victory');
       return;
     }
-    b.x = 480 + Math.sin(this.time * 0.85) * 210;
-    b.y = 118 + Math.sin(this.time * 1.7) * 10;
+    b.x = 480 * K + Math.sin(this.time * 0.85) * 210 * K;
+    b.y = 118 * K + Math.sin(this.time * 1.7) * 10 * K;
     if (b.flash > 0) b.flash -= dt;
     if (b.hitCooldown > 0) b.hitCooldown -= dt;
 
@@ -499,13 +502,13 @@
       var shots = b.hp === 3 ? 1 : 2;
       for (var s = 0; s < shots; s++) {
         var ang = Math.atan2(p.y - b.y, p.x - b.x) + (s - (shots - 1) / 2) * 0.28;
-        var sp = 2.1 + (3 - b.hp) * 0.3;
-        b.fireballs.push({ x: b.x, y: b.y + 4, vx: Math.cos(ang) * sp, vy: Math.sin(ang) * sp, life: 4 });
+        var sp = (2.1 + (3 - b.hp) * 0.3) * K;
+        b.fireballs.push({ x: b.x, y: b.y + 4 * K, vx: Math.cos(ang) * sp, vy: Math.sin(ang) * sp, life: 4 });
       }
       b.fireTimer = Math.max(0.9, 1.9 - (3 - b.hp) * 0.35);
       this.audio.play('hit', 0.25);
       this.ring(b.x, b.y, '#d97846', 14, 0.3);
-      this.burst(b.x, b.y + 4, '#f5e3ab', 6, { speed: 1.2, size: 1, glow: true, gravity: 0 });
+      this.burst(b.x, b.y + 4 * K, '#f5e3ab', 6, { speed: 1.2, size: 1, glow: true, gravity: 0 });
     }
     for (var i = b.fireballs.length - 1; i >= 0; i--) {
       var f = b.fireballs[i];
@@ -515,12 +518,12 @@
           vx: -f.vx * 0.08, vy: -f.vy * 0.08, gravity: 0, life: 0.35, size: 1, glow: true
         });
       }
-      if (f.life <= 0 || f.y > 260 || f.x < 0 || f.x > this.level.worldW) b.fireballs.splice(i, 1);
-      else if (this.invuln <= 0 && Math.abs(f.x - (p.x + 5)) < 7 && Math.abs(f.y - (p.y + 7)) < 7) { this.die(); return; }
+      if (f.life <= 0 || f.y > 260 * K || f.x < 0 || f.x > this.level.worldW) b.fireballs.splice(i, 1);
+      else if (this.invuln <= 0 && Math.abs(f.x - (p.x + 5 * K)) < 7 * K && Math.abs(f.y - (p.y + 7 * K)) < 7 * K) { this.die(); return; }
     }
 
     if (this.curvature > 0.55 && b.hitCooldown <= 0 &&
-        Math.abs(p.x + 5 - b.x) < 19 && Math.abs(p.y + 7 - b.y) < 14) {
+        Math.abs(p.x + 5 * K - b.x) < 19 * K && Math.abs(p.y + 7 * K - b.y) < 14 * K) {
       b.hp--;
       b.flash = 0.3;
       b.hitCooldown = 0.9;
@@ -598,11 +601,12 @@
       c.clearRect(0, 0, W, H);
       var k = Math.sin((this.warp / 0.5) * Math.PI);
       var dir = this.target ? 1 : -1;
-      for (var y = 0; y < H + 3; y += 3) {
-        var sy = Math.min(y, H - 3);
-        var dx = Math.sin((y - this.level.vanish.y) / H * Math.PI) * 7 * k * dir;
-        c.drawImage(this.scene, 0, sy * this.scale, this.scene.width, 3 * this.scale,
-          dx - 4 + ox, y - 4 + oy, W + 8, 3);
+      var SLICE = 3 * K;
+      for (var y = 0; y < H + SLICE; y += SLICE) {
+        var sy = Math.min(y, H - SLICE);
+        var dx = Math.sin((y - this.level.vanish.y) / H * Math.PI) * 7 * K * k * dir;
+        c.drawImage(this.scene, 0, sy * this.scale, this.scene.width, SLICE * this.scale,
+          dx - K + ox, y - K + oy, W + 2 * K, SLICE);
       }
       c.globalAlpha = 0.22 * k;
       c.fillStyle = '#e3c57d';
@@ -634,10 +638,18 @@
       var plat = lv.platforms[i];
       var ends = this.platformEnds(plat);
       if (Math.max(ends[0][0], ends[1][0]) < this.camX - 20 ||
-          Math.min(ends[0][0], ends[1][0]) > this.camX + W + 20) continue;
+          Math.min(ends[0][0], ends[1][0]) > this.camX + W + 20 * K) continue;
       var alpha = plat.kind === 'both' ? 1 :
         (plat.kind === 'curve' ? 0.18 + this.curvature * 0.82 : 1.0 - this.curvature * 0.82);
       A.platform(ctx, ends[0], ends[1], plat.style, alpha, this.time);
+    }
+
+    if (lv.lamps) {
+      for (var li = 0; li < lv.lamps.length; li++) {
+        var lampX = lv.lamps[li][0];
+        if (lampX < this.camX - 60 || lampX > this.camX + W + 60) continue;
+        A.lantern(ctx, lampX, lv.lamps[li][1], this.time);
+      }
     }
 
     for (var q = 0; q < this.items.length; q++) if (!this.items[q].taken) A.pickup(ctx, this.items[q], this.time);
@@ -659,7 +671,7 @@
       for (var tr = 0; tr < this.player.trail.length; tr++) {
         var ghost = this.player.trail[tr];
         ctx.globalAlpha = (tr + 1) / this.player.trail.length * 0.28;
-        A.rect(ctx, ghost.x + 1, ghost.y + 6, 8, 6,
+        A.rect(ctx, ghost.x + 1 * K, ghost.y + 6 * K, 8 * K, 6 * K,
           this.curvature > 0.5 ? A.colors.gold : A.colors.parchment);
       }
       ctx.restore();
@@ -681,7 +693,7 @@
       ctx.strokeStyle = '#e3c57d';
       for (var l = 0; l < 5; l++) {
         ctx.beginPath();
-        ctx.arc(lv.vanish.x - this.camX, lv.vanish.y, 45 + l * 38 + Math.sin(this.time * 2 + l) * 4, 0, Math.PI * 2);
+        ctx.arc(lv.vanish.x - this.camX, lv.vanish.y, (45 + l * 38 + Math.sin(this.time * 2 + l) * 4) * K, 0, Math.PI * 2);
         ctx.stroke();
       }
       ctx.restore();

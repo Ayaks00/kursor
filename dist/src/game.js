@@ -133,8 +133,30 @@
     this.setState('death');
   };
 
+  // Страховка респавна: если точка оказалась внутри/под платформой,
+  // поднимаем игрока на её поверхность, а не даём провалиться сквозь неё.
+  Game.prototype.settleOnPlatform = function () {
+    var p = this.player;
+    var cx = p.x + p.w / 2, bestY = Infinity;
+    for (var i = 0; i < this.level.platforms.length; i++) {
+      var plat = this.level.platforms[i];
+      if (!this.platformSolid(plat)) continue;
+      var ends = this.platformEnds(plat);
+      var minX = Math.min(ends[0][0], ends[1][0]) - 10 * K;
+      var maxX = Math.max(ends[0][0], ends[1][0]) + 10 * K;
+      if (cx < minX || cx > maxX) continue;
+      var sy = this.surfaceY(ends, cx);
+      if (sy < bestY) bestY = sy;
+    }
+    if (bestY < Infinity && p.y + p.h >= bestY - 6 * K) {
+      p.y = bestY - p.h - K;
+      p.vy = 0;
+    }
+  };
+
   Game.prototype.respawnNow = function () {
     this.resetPlayer();
+    this.settleOnPlatform();
     this.camX = clamp(this.player.x - W * 0.38, 0, Math.max(0, this.level.worldW - W));
     this.invuln = 1.8;
     if (this.boss) {
@@ -453,7 +475,8 @@
       var cp = this.checkpoints[c];
       if (!cp.active && Math.abs(p.x + 5 * K - cp.x) < 10 * K && Math.abs(p.y + 7 * K - cp.y) < 14 * K) {
         cp.active = true;
-        this.respawn = { x: cp.x - 5, y: cp.y - 16 };
+        // cp.y — поверхность платформы; высота игрока 14*K, плюс небольшой зазор.
+        this.respawn = { x: cp.x - 5 * K, y: cp.y - 16 * K };
         this.audio.play('checkpoint', 0.55);
         this.burst(cp.x, cp.y - 14, '#f5e3ab', 18, { speed: 1.6, size: 2, glow: true, gravity: -0.01 });
         this.ring(cp.x, cp.y - 14, '#d9b15c', 24, 0.6);

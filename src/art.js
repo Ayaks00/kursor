@@ -369,42 +369,56 @@
       var dx = x2 - x1, dy = y2 - y1;
       var len = Math.sqrt(dx * dx + dy * dy) || 1;
       var nx = -dy / len, ny = dx / len;
-      var thick = 6;
-      var base = style === 'wood' ? '#8a6a48' : style === 'metal' ? '#916f40' : '#a29272';
-      var top = style === 'wood' ? '#c09a68' : style === 'metal' ? C.gold : C.marble;
-      var dark = style === 'wood' ? '#5c432f' : style === 'metal' ? C.bronzeDark : '#6f6049';
-      // Массивная плита: тень снизу, светлый верх, тонкая фаска по краю.
-      ctx.beginPath();
-      ctx.moveTo(x1, y1); ctx.lineTo(x2, y2);
-      ctx.lineTo(x2 + nx * thick, y2 + ny * thick);
-      ctx.lineTo(x1 + nx * thick, y1 + ny * thick);
-      ctx.closePath();
+      var thick = 7;
+      var base = style === 'wood' ? '#7b5433' : style === 'metal' ? '#6f532b' : '#7a6a51';
+      var top = style === 'wood' ? '#e0b477' : style === 'metal' ? '#f0d183' : '#f7efd8';
+      var dark = style === 'wood' ? '#3d2a1c' : style === 'metal' ? '#4a3920' : '#4d4032';
+      var edge = '#241a12';
+      function slab(offset, thickness) {
+        ctx.beginPath();
+        ctx.moveTo(x1 + nx * offset, y1 + ny * offset);
+        ctx.lineTo(x2 + nx * offset, y2 + ny * offset);
+        ctx.lineTo(x2 + nx * (offset + thickness), y2 + ny * (offset + thickness));
+        ctx.lineTo(x1 + nx * (offset + thickness), y1 + ny * (offset + thickness));
+        ctx.closePath();
+      }
+      // Тёмная подложка отделяет дорожку от любого фона.
+      slab(1.5, thick + 2);
+      ctx.fillStyle = 'rgba(20,13,8,0.5)'; ctx.fill();
+      // Массив плиты с чётким контуром.
+      slab(0, thick);
       ctx.fillStyle = base; ctx.fill();
-      A.rect(ctx, x1 + nx * (thick - 1), y1 + ny * (thick - 1), len, 1, dark);
-      ctx.strokeStyle = top; ctx.lineWidth = 0.5;
-      ctx.beginPath(); ctx.moveTo(x1, y1 - 0.25); ctx.lineTo(x2, y2 - 0.25); ctx.stroke();
+      ctx.strokeStyle = edge; ctx.lineWidth = 0.7; ctx.stroke();
+      // Яркая верхняя поверхность — по ней идёт игрок.
+      slab(-0.6, 2.4);
+      ctx.fillStyle = top; ctx.fill();
+      ctx.strokeStyle = 'rgba(255,244,208,0.8)'; ctx.lineWidth = 0.4; ctx.stroke();
+      // Тёмная нижняя кромка и тень под ней.
+      slab(thick - 1.6, 1.6);
+      ctx.fillStyle = dark; ctx.fill();
       // Каменные швы / древесная текстура / бронзовые заклёпки.
       for (var d = 7; d < len; d += 11) {
-        var px = x1 + dx * (d / len) + nx * 2.5;
-        var py = y1 + dy * (d / len) + ny * 2.5;
+        var px = x1 + dx * (d / len) + nx * 3;
+        var py = y1 + dy * (d / len) + ny * 3;
         if (style === 'wood') {
-          A.rect(ctx, px, py, 4, 0.25, '#6d4c33');
-          A.rect(ctx, px + 1, py + 2, 3, 0.25, '#9d7850');
+          A.rect(ctx, px, py, 4, 0.4, '#6d4c33');
+          A.rect(ctx, px + 1, py + 2, 3, 0.3, '#a87a4b');
         } else if (style === 'metal') {
-          A.rect(ctx, px, py, 1, 1, C.goldLight);
-          A.rect(ctx, px + 0.25, py + 0.25, 0.5, 0.5, C.bronzeDark);
+          A.rect(ctx, px, py, 1.2, 1.2, C.goldLight);
+          A.rect(ctx, px + 0.3, py + 0.3, 0.6, 0.6, C.bronzeDark);
         } else {
-          A.rect(ctx, px, py, 0.5, 3, dark);
-          A.rect(ctx, px + 2, py + 1, 3, 0.5, '#c3b492');
+          A.rect(ctx, px, py, 0.6, 3, '#5a4b39');
+          A.rect(ctx, px + 2, py + 1, 3, 0.5, '#fff4d0');
         }
       }
       if (style === 'metal' && len > 14) {
-        A.ornament(ctx, 3, 1.5, Math.min(26, len - 6), C.goldLight, phase);
+        A.ornament(ctx, 3, 2, Math.min(26, len - 6), C.goldLight, phase);
       }
       if (style === 'stone' && len > 20) {
-        ctx.strokeStyle = 'rgba(245,227,171,0.35)';
+        ctx.strokeStyle = 'rgba(255,244,208,0.6)';
+        ctx.lineWidth = 0.5;
         ctx.beginPath();
-        ctx.moveTo(4, 1.5); ctx.lineTo(len - 4, 1.5);
+        ctx.moveTo(4, 1.2); ctx.lineTo(len - 4, 1.2);
         ctx.stroke();
       }
     });

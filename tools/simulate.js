@@ -68,7 +68,7 @@ function run(levelIndex) {
     lastX = game.player.x;
     if (game.state === 'complete') return { levelIndex, ok: true, maxX, jumps, toggles, frames: frame };
   }
-  return { levelIndex, ok: false, maxX, jumps, toggles, deaths: game.deaths, state: game.state };
+  return { levelIndex, ok: false, maxX, jumps, toggles, state: game.state };
 }
 for (let i = 0; i < 3; i++) console.log(JSON.stringify(run(i)));
 

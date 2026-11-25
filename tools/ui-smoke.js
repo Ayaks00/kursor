@@ -27,7 +27,7 @@ Object.defineProperty(El.prototype, 'innerHTML', { set() { this.children = []; }
 
 const screenNames = ['menu','how','intro','pause','death','complete','victory'];
 const screens = screenNames.map(n => { const e = new El('screen-' + n); e.setAttribute('data-screen', n); return e; });
-const ids = ['ui','stage','menu-list','pause-list','hud','toast','hud-level','hud-stats',
+const ids = ['ui','stage','menu-list','pause-list','hud','toast','hud-level',
   'chakchak-box','chak-count','chak-total','chak-fill','curv-label',
   'curv-fill','boss-box','boss-fill','hint-box','hint-task','intro-title','intro-subtitle','intro-fact',
   'intro-task','complete-name','complete-time','complete-stats'];
@@ -72,7 +72,7 @@ for (const state of ['menu','how','intro','play','pause','death','complete','vic
 game.setState('play');
 game.hintTime = 10; game.curvature = 0.7; game.target = 1;
 game.render();
-console.log('HUD level:', nodes['hud-level'].textContent, '| stats:', nodes['hud-stats'].textContent,
+console.log('HUD level:', nodes['hud-level'].textContent,
             '| curv:', nodes['curv-label'].textContent, nodes['curv-fill'].style.width);
 console.log('menu buttons:', ui.menuList.children.map(b => b.textContent).join(' / '));
 console.log('pause buttons:', ui.pauseList.children.map(b => b.textContent).join(' / '));

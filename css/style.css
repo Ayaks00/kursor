@@ -155,15 +155,11 @@ h1, h2 {
 /* HUD */
 #hud { display: none; position: absolute; inset: 0; }
 #hud.active { display: block; }
-#hud-level, #hud-stats {
+#hud-level {
   position: absolute; top: calc(var(--u) * 5);
   font-size: calc(var(--u) * 9); font-weight: bold;
 }
 #hud-level { left: calc(var(--u) * 6); color: var(--gold-light); }
-#hud-stats {
-  top: calc(var(--u) * 40); right: calc(var(--u) * 6);
-  font-size: calc(var(--u) * 8); color: var(--dim);
-}
 
 /* Счётчик чак-чака — отдельный заметный блок, а не строка в HUD. */
 #chakchak-box {

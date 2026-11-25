@@ -90,9 +90,10 @@ def slide1(c):
     bullets(c, [
         'Наука: Н. И. Лобачевский, доклад 1826 года, ректор КФУ в 1827–1846 гг.',
         'Казань: главное здание КФУ как статичный фон; Баумана, обсерватория, Кремль, Зилант — в уровнях.',
-        'Формат: веб, запуск без установки среды, raster 960×540 px (плотность ×4), < 400 КБ.',
+        'Формат: веб, запуск без установки среды, raster 1920×1080 px (плотность ×16), < 400 КБ.',
+        'Эффекты: пыль, ударные кольца, свечение, вспышки, тряска и конфетти поверх статичного фона.',
     ], 36, H - 250, 520, 12, 19)
-    screenshot(c, 'menu.png', 560, 120, 248)
+    screenshot(c, '01-menu.png', 560, 120, 248)
     c.setFillColor(MUTED)
     c.setFont('DejaVu', 11)
     c.drawString(36, 50, 'Игра: index.html · Исходники: GitHub · Сборка: kursor-lobachevsky-web.zip')
@@ -132,7 +133,7 @@ def slide3(c):
         'Переключение доступно в прыжке; без него ни один уровень не проходится.',
         'Эффект: дуги, искажение кадра, смена цвета персонажа и звук перехода.',
     ], 36, H - 110, 470, 12, 21)
-    screenshot(c, 'curved-geometry.png', 520, 150, 288)
+    screenshot(c, '06-curved.png', 520, 150, 288)
     c.setFillColor(MUTED)
     c.setFont('DejaVu', 10)
     c.drawString(520, 130, 'Скриншот: параллельные навесы сошлись в точке')
@@ -153,8 +154,8 @@ def slide4(c):
         c.drawString(36, y, title)
         wrap(c, body, 36, y - 20, 480, 11, 16)
         y -= 70
-    screenshot(c, 'boss-zilant.png', 520, 320, 288)
-    screenshot(c, 'observatory.png', 520, 130, 288)
+    screenshot(c, '09-boss.png', 520, 320, 288)
+    screenshot(c, '08-observatory.png', 520, 130, 288)
     c.setFillColor(MUTED)
     c.setFont('DejaVu', 9)
     c.drawString(520, 495, 'Финал: Зилант')
@@ -191,7 +192,7 @@ def slide6(c):
         'Факты: Музей истории КФУ, страницы КФУ, astro.kpfu.ru, UNESCO.',
         'Игровая метафора не выдаётся за исторический факт.',
     ], 36, H - 150, 560, 12, 21)
-    screenshot(c, 'victory.png', 580, 110, 228)
+    screenshot(c, '10-victory.png', 580, 110, 228)
     c.setFillColor(MUTED)
     c.setFont('DejaVu', 10)
     c.drawString(36, 42, 'Русский язык интерфейса · 4 сцены · демо-видео записывается по инструкции в README')

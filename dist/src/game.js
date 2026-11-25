@@ -2,7 +2,7 @@
 (function (KZ) {
   'use strict';
 
-  var W = 480, H = 270, SCALE = 2;
+  var W = 480, H = 270, SCALE = 4;
   var A = KZ.Art;
   var SAVE_KEY = 'kz_lobachevsky_save_v1';
 
@@ -12,8 +12,8 @@
   function Game(canvas, input, audio) {
     this.canvas = canvas;
     this.scale = SCALE;
-    // Логические координаты остаются 480×270, но реальный raster — 960×540:
-    // в четыре раза больше физических пикселей на ту же площадь экрана.
+    // Логические координаты остаются 480×270, но реальный raster — 1920×1080:
+    // в 16 раз больше физических пикселей, чем в первой версии, и в 4 раза больше, чем было.
     if (canvas.width !== W * SCALE) canvas.width = W * SCALE;
     if (canvas.height !== H * SCALE) canvas.height = H * SCALE;
     this.ctx = canvas.getContext('2d');
@@ -41,6 +41,11 @@
     this.menuIndex = 0;
     this.menuRects = [];
     this.particles = [];
+    this.effects = [];
+    this.shakeTime = 0; this.shakeMag = 0;
+    this.flashTime = 0; this.flashMax = 0;
+    this.flashAlpha = 0; this.flashColor = '#e3c57d';
+    this.frameNo = 0;
     this.hintTime = 0;
     this.player = { x: 0, y: 0, vx: 0, vy: 0, w: 10, h: 14, onGround: false, groundIdx: -1, coyote: 0, jumpBuf: 0, face: 1 };
     this.save = this.loadSave();
@@ -85,6 +90,8 @@
     this.switches = 0;
     this.hintTime = lv.id === 1 ? 14 : 0;
     this.particles = [];
+    this.effects = [];
+    this.shakeTime = 0; this.flashTime = 0;
     this.timeInLevel = 0;
     this.invuln = 0;
     this.resetPlayer();
@@ -102,6 +109,7 @@
     p.x = this.respawn.x; p.y = this.respawn.y;
     p.vx = 0; p.vy = 0; p.onGround = false; p.groundIdx = -1;
     p.coyote = 0; p.jumpBuf = 0;
+    p.trail = [];
   };
 
   Game.prototype.restartLevel = function () {
@@ -114,7 +122,10 @@
     if (this.state !== 'play') return;
     this.deaths++;
     this.audio.play('fall', 0.7);
-    this.burst(this.player.x + 5, this.player.y + 7, '#c45646', 12);
+    this.burst(this.player.x + 5, this.player.y + 7, '#c45646', 16, { speed: 2.1, glow: true });
+    this.ring(this.player.x + 5, this.player.y + 7, '#c45646', 26, 0.5);
+    this.shake(2.2, 0.35);
+    this.flash('#7e2a26', 0.3, 0.22);
     this.setState('death');
   };
 
@@ -129,16 +140,46 @@
     this.setState('play');
   };
 
-  Game.prototype.burst = function (x, y, color, n) {
-    for (var i = 0; i < n; i++) {
-      this.particles.push({
-        x: x, y: y,
-        vx: (Math.random() * 2 - 1) * 1.6,
-        vy: (Math.random() * 2 - 1.3) * 1.6,
-        life: 0.4 + Math.random() * 0.5,
-        color: color
-      });
-    }
+  // Частицы с настраиваемой скоростью, силой тяжести, размером и свечением.
+  Game.prototype.spark = function (x, y, color, opt) {
+    opt = opt || {};
+    if (this.particles.length > 420) return;
+    var speed = opt.speed === undefined ? 1.6 : opt.speed;
+    var life = opt.life === undefined ? 0.4 + Math.random() * 0.5 : opt.life;
+    this.particles.push({
+      x: x, y: y,
+      vx: (Math.random() * 2 - 1) * speed + (opt.vx || 0),
+      vy: (Math.random() * 2 - 1.3) * speed + (opt.vy || 0),
+      life: life,
+      maxLife: life,
+      color: color,
+      size: opt.size || 2,
+      gravity: opt.gravity === undefined ? 0.06 : opt.gravity,
+      glow: !!opt.glow,
+      screen: !!opt.screen
+    });
+  };
+
+  Game.prototype.burst = function (x, y, color, n, opt) {
+    for (var i = 0; i < n; i++) this.spark(x, y, color, opt);
+  };
+
+  // Расширяющееся кольцо — ударная волна при переключении геометрии, сборе и ударе.
+  Game.prototype.ring = function (x, y, color, maxR, life, screen) {
+    if (this.effects.length > 40) return;
+    this.effects.push({ x: x, y: y, color: color, r: 1, maxR: maxR, life: life, maxLife: life, screen: !!screen });
+  };
+
+  Game.prototype.shake = function (mag, time) {
+    this.shakeMag = Math.max(this.shakeMag, mag);
+    this.shakeTime = Math.max(this.shakeTime, time);
+  };
+
+  Game.prototype.flash = function (color, alpha, time) {
+    this.flashColor = color;
+    this.flashAlpha = Math.max(this.flashAlpha, alpha);
+    this.flashTime = Math.max(this.flashTime, time);
+    this.flashMax = this.flashTime;
   };
 
   Game.prototype.platformEnds = function (plat) {
@@ -166,6 +207,12 @@
     this.time += dt;
     this.stateTime += dt;
     this.warp = Math.max(0, this.warp - dt);
+    this.frameNo++;
+    if (this.shakeTime > 0) this.shakeTime = Math.max(0, this.shakeTime - dt);
+    if (this.flashTime > 0) {
+      this.flashTime -= dt;
+      if (this.flashTime <= 0) this.flashAlpha = 0;
+    }
 
     if (this.input.mutePressed()) {
       var muted = this.audio.toggleMute();
@@ -187,14 +234,31 @@
     } else if (this.state === 'complete') {
       if (this.input.confirmPressed()) this.advance();
     } else if (this.state === 'victory') {
+      // Титры засыпают золотыми листьями и чак-чаком — эффект поверх интерфейса.
+      if (this.frameNo % 3 === 0) {
+        var festive = ['#f5e3ab', '#d9b15c', '#92b27a', '#b5643f', '#e9dfc4'];
+        for (var ci = 0; ci < 2; ci++) {
+          this.spark(Math.random() * W, -3, festive[(Math.random() * festive.length) | 0], {
+            vx: (Math.random() - 0.5) * 0.9, vy: 0.5 + Math.random() * 0.7,
+            gravity: 0.012, life: 4.5, size: 2, screen: true
+          });
+        }
+      }
       if (this.input.confirmPressed() && this.stateTime > 1.5) this.setState('menu');
     }
 
     // частицы
     for (var i = this.particles.length - 1; i >= 0; i--) {
       var q = this.particles[i];
-      q.x += q.vx; q.y += q.vy; q.vy += 0.06; q.life -= dt;
+      q.x += q.vx; q.y += q.vy; q.vy += q.gravity; q.life -= dt;
       if (q.life <= 0) this.particles.splice(i, 1);
+    }
+    // ударные кольца
+    for (var ef = this.effects.length - 1; ef >= 0; ef--) {
+      var fx = this.effects[ef];
+      fx.life -= dt;
+      fx.r = fx.maxR * (1 - Math.max(0, fx.life) / fx.maxLife);
+      if (fx.life <= 0) this.effects.splice(ef, 1);
     }
   };
 
@@ -274,7 +338,11 @@
       this.warp = 0.5;
       this.switches++;
       this.audio.play('toggle', 0.5);
-      this.burst(this.player.x + 5, this.player.y + 6, '#e3c57d', 6);
+      this.burst(this.player.x + 5, this.player.y + 6, '#e3c57d', 10, { speed: 2, glow: true });
+      this.ring(this.player.x + 5, this.player.y + 6, '#f5e3ab', 28, 0.55);
+      this.ring(this.level.vanish.x, this.level.vanish.y, '#e3c57d', 34, 0.7);
+      this.flash('#e3c57d', 0.12, 0.28);
+      this.shake(0.9, 0.22);
     }
     this.curvature += (this.target - this.curvature) * Math.min(1, dt * 10);
     if (Math.abs(this.target - this.curvature) < 0.005) this.curvature = this.target;
@@ -299,7 +367,8 @@
       p.jumpBuf = 0;
       p.jumpHeld = true;
       this.audio.play('jump', 0.55);
-      this.burst(p.x + 5, p.y + 14, this.target ? '#e3c57d' : '#e6c47a', 4);
+      this.burst(p.x + 5, p.y + 14, this.target ? '#e3c57d' : '#e6c47a', 6, { speed: 1.2, size: 1, gravity: 0.09 });
+      this.ring(p.x + 5, p.y + 14, '#d9b15c', 9, 0.28);
     }
     if (!inp.jumpDown() && p.jumpHeld && p.vy < -2) { p.vy *= 0.55; p.jumpHeld = false; }
 
@@ -312,6 +381,13 @@
     if (p.vy > 6.5) p.vy = 6.5;
     p.x = clamp(p.x + p.vx, 0, lv.worldW - p.w);
     p.y += p.vy;
+
+    // Короткий шлейф за героем: заметен при беге и в кривой геометрии.
+    if (!p.trail) p.trail = [];
+    if (this.frameNo % 2 === 0 && Math.abs(p.vx) > 0.5) {
+      p.trail.push({ x: p.x, y: p.y });
+      if (p.trail.length > 5) p.trail.shift();
+    }
 
     var wasGround = p.onGround;
     var oldIdx = p.groundIdx;
@@ -337,11 +413,18 @@
       if ((crossing || sliding) && syNow < bestY) { bestY = syNow; bestIdx = i; }
     }
     if (bestIdx >= 0) {
+      var impact = p.vy;
       p.y = bestY - p.h;
       p.vy = 0;
       p.onGround = true;
       p.groundIdx = bestIdx;
       p.coyote = 5;
+      if (!wasGround && impact > 1.7) {
+        this.audio.play('land', Math.min(0.5, 0.2 + impact * 0.05));
+        this.burst(p.x + 5, bestY, '#c8b998', impact > 4 ? 8 : 4, { speed: 1, size: 1, gravity: 0.08 });
+        this.ring(p.x + 5, bestY, '#e9dfc4', 11, 0.25);
+        if (impact > 4) this.shake(0.5, 0.12);
+      }
     }
 
     if (p.y > 290) { this.die(); return; }
@@ -353,7 +436,10 @@
       if (Math.abs(p.x + 5 - it.x) < 9 && Math.abs(p.y + 7 - it.y) < 10) {
         it.taken = true;
         this.audio.play('coin', 0.5);
-        this.burst(it.x, it.y, it.type === 'chakchak' ? '#ffce6a' : '#fff3c8', 8);
+        var sparkle = it.type === 'chakchak' ? '#ffce6a' : '#fff3c8';
+        this.burst(it.x, it.y, sparkle, 12, { speed: 2, size: 2, glow: true });
+        this.ring(it.x, it.y, sparkle, 18, 0.4);
+        this.flash(sparkle, 0.05, 0.1);
       }
     }
     // чекпоинты
@@ -363,6 +449,9 @@
         cp.active = true;
         this.respawn = { x: cp.x - 5, y: cp.y - 16 };
         this.audio.play('checkpoint', 0.55);
+        this.burst(cp.x, cp.y - 14, '#f5e3ab', 18, { speed: 1.6, size: 2, glow: true, gravity: -0.01 });
+        this.ring(cp.x, cp.y - 14, '#d9b15c', 24, 0.6);
+        this.flash('#f5e3ab', 0.09, 0.2);
         this.toast = 'ЧЕКПОИНТ АКТИВИРОВАН';
         this.toastTime = 1.4;
       }
@@ -385,6 +474,9 @@
     else if (this.level.goal && Math.abs(p.x + 5 - this.level.goal.x) < 12 &&
              Math.abs(p.y + 7 - this.level.goal.y) < 20) {
       this.audio.play('win', 0.55);
+      this.burst(this.level.goal.x + 8, this.level.goal.y + 12, '#f5e3ab', 26, { speed: 2.4, size: 2, glow: true, gravity: -0.02 });
+      this.ring(this.level.goal.x + 8, this.level.goal.y + 12, '#d9b15c', 36, 0.8);
+      this.flash('#f5e3ab', 0.16, 0.3);
       this.setState('complete');
     }
 
@@ -412,10 +504,17 @@
       }
       b.fireTimer = Math.max(0.9, 1.9 - (3 - b.hp) * 0.35);
       this.audio.play('hit', 0.25);
+      this.ring(b.x, b.y, '#d97846', 14, 0.3);
+      this.burst(b.x, b.y + 4, '#f5e3ab', 6, { speed: 1.2, size: 1, glow: true, gravity: 0 });
     }
     for (var i = b.fireballs.length - 1; i >= 0; i--) {
       var f = b.fireballs[i];
       f.x += f.vx; f.y += f.vy; f.life -= dt;
+      if (this.frameNo % 2 === 0) {
+        this.spark(f.x, f.y, i % 2 ? '#b5643f' : '#e3c57d', {
+          vx: -f.vx * 0.08, vy: -f.vy * 0.08, gravity: 0, life: 0.35, size: 1, glow: true
+        });
+      }
       if (f.life <= 0 || f.y > 260 || f.x < 0 || f.x > this.level.worldW) b.fireballs.splice(i, 1);
       else if (this.invuln <= 0 && Math.abs(f.x - (p.x + 5)) < 7 && Math.abs(f.y - (p.y + 7)) < 7) { this.die(); return; }
     }
@@ -428,11 +527,18 @@
       this.invuln = 0.6;
       p.vy = -4;
       this.audio.play('break', 0.65);
-      this.burst(b.x, b.y, '#e9ffb0', 18);
+      this.burst(b.x, b.y, '#e9ffb0', 28, { speed: 2.4, size: 2, glow: true });
+      this.ring(b.x, b.y, '#f5e3ab', 30, 0.5);
+      this.ring(b.x, b.y, '#d9b15c', 18, 0.35);
+      this.flash('#fff3c8', 0.2, 0.22);
+      this.shake(2.4, 0.3);
       b.fireballs = [];
       if (b.hp <= 0) {
         b.dead = true;
-        this.burst(b.x, b.y, '#fff3a8', 40);
+        this.burst(b.x, b.y, '#fff3a8', 60, { speed: 3, size: 3, glow: true });
+        this.ring(b.x, b.y, '#fff3c8', 58, 0.9);
+        this.flash('#e3c57d', 0.32, 0.5);
+        this.shake(3, 0.5);
         this.audio.play('win', 0.7);
       }
     }
@@ -458,36 +564,57 @@
   };
 
   Game.prototype.render = function () {
-    var s = this.sctx;
+    var c = this.ctx;
+    var warping = this.warp > 0 && this.state === 'play';
+    // Обычные кадры идут сразу в экранный canvas: сразу на 1920×1080 меньше
+    // одна полная перерисовка. Двойной буфер нужен только на эффекте схождения.
+    var s = warping ? this.sctx : c;
     s.clearRect(0, 0, W, H);
+    var amp = this.shakeTime > 0 ? this.shakeMag * Math.min(1, this.shakeTime * 6) : 0;
+    var ox = amp > 0 ? Math.round((Math.random() * 2 - 1) * amp) : 0;
+    var oy = amp > 0 ? Math.round((Math.random() * 2 - 1) * amp) : 0;
 
+    if (!warping && amp > 0) {
+      s.fillStyle = '#101026';
+      s.fillRect(0, 0, W, H);
+    }
+    s.save();
+    // При схождении тряска применяется при копировании полос; здесь её нет.
+    if (!warping) s.translate(ox, oy);
     if (this.state === 'menu' || this.state === 'how' || this.state === 'about' || this.state === 'exit') {
       A.backdrop(s, KZ.LEVELS[3], 0, this.time);
       s.fillStyle = 'rgba(9,9,22,0.55)';
       s.fillRect(0, 0, W, H);
+      A.halo(s, 240, 74, 84, '#d9b15c', 0.12);
       for (var st = 0; st < 28; st++) {
         A.rect(s, (st * 61 + this.time * 6) % W, 240 + (st % 4) * 6, 2, 2, '#c8a45c');
       }
     } else {
       this.drawWorld(s);
     }
+    s.restore();
 
-    var c = this.ctx;
-    c.clearRect(0, 0, W, H);
-    if (this.warp > 0 && this.state === 'play') {
+    if (warping) {
+      c.clearRect(0, 0, W, H);
       var k = Math.sin((this.warp / 0.5) * Math.PI);
       var dir = this.target ? 1 : -1;
-      for (var y = 0; y < H; y += 3) {
+      for (var y = 0; y < H + 3; y += 3) {
+        var sy = Math.min(y, H - 3);
         var dx = Math.sin((y - this.level.vanish.y) / H * Math.PI) * 7 * k * dir;
-        c.drawImage(this.scene, 0, y * this.scale, this.scene.width, 3 * this.scale,
-          dx, y, W, 3);
+        c.drawImage(this.scene, 0, sy * this.scale, this.scene.width, 3 * this.scale,
+          dx - 4 + ox, y - 4 + oy, W + 8, 3);
       }
       c.globalAlpha = 0.22 * k;
       c.fillStyle = '#e3c57d';
       c.fillRect(0, 0, W, H);
       c.globalAlpha = 1;
-    } else {
-      c.drawImage(this.scene, 0, 0, this.scene.width, this.scene.height, 0, 0, W, H);
+    }
+    // Цветовая вспышка поверх мира, но под DOM-интерфейсом.
+    if (this.flashTime > 0 && this.flashAlpha > 0) {
+      c.globalAlpha = this.flashAlpha * Math.min(1, this.flashTime / Math.max(0.01, this.flashMax));
+      c.fillStyle = this.flashColor;
+      c.fillRect(0, 0, W, H);
+      c.globalAlpha = 1;
     }
 
     if (this.ui) this.ui.render(this);
@@ -527,13 +654,23 @@
       if (!this.boss.dead) A.dragon(ctx, this.boss, this.time + (this.boss.flash > 0 ? 5 : 0));
       for (var f = 0; f < this.boss.fireballs.length; f++) A.fireball(ctx, this.boss.fireballs[f], this.time);
     }
+    if (this.state !== 'death' && this.player.trail) {
+      ctx.save();
+      for (var tr = 0; tr < this.player.trail.length; tr++) {
+        var ghost = this.player.trail[tr];
+        ctx.globalAlpha = (tr + 1) / this.player.trail.length * 0.28;
+        A.rect(ctx, ghost.x + 1, ghost.y + 6, 8, 6,
+          this.curvature > 0.5 ? A.colors.gold : A.colors.parchment);
+      }
+      ctx.restore();
+    }
     if (this.state !== 'death' && !(this.invuln > 0 && ((this.time * 14) | 0) % 2 === 0)) {
       A.player(ctx, this.player, this.time, this.curvature > 0.5);
     }
 
-    for (var p = 0; p < this.particles.length; p++) {
-      var q2 = this.particles[p];
-      A.rect(ctx, q2.x, q2.y, 2, 2, q2.color);
+    for (var p = 0; p < this.particles.length; p++) if (!this.particles[p].screen) A.drawParticle(ctx, this.particles[p]);
+    for (var e2 = 0; e2 < this.effects.length; e2++) {
+      if (!this.effects[e2].screen) A.drawRing(ctx, this.effects[e2]);
     }
     ctx.restore();
 
@@ -548,6 +685,17 @@
         ctx.stroke();
       }
       ctx.restore();
+    }
+
+    // Постоянное виньетирование: глубина без движения и без усложнения фона.
+    A.vignette(ctx);
+
+    // Эффекты и конфетти в экранных координатах — поверх виньетки, под HTML-слоем.
+    for (var se = 0; se < this.effects.length; se++) {
+      if (this.effects[se].screen) A.drawRing(ctx, this.effects[se]);
+    }
+    for (var sp = 0; sp < this.particles.length; sp++) {
+      if (this.particles[sp].screen) A.drawParticle(ctx, this.particles[sp]);
     }
   };
 

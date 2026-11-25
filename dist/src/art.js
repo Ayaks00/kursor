@@ -19,6 +19,56 @@
     ctx.fillRect(Math.round(x), Math.round(y), Math.round(w), Math.round(h));
   };
 
+  // Ступенчатый пиксельный ореол: мягкий свет без размытия графики.
+  A.halo = function (ctx, x, y, r, color, alpha) {
+    ctx.save();
+    for (var i = 3; i >= 1; i--) {
+      ctx.globalAlpha = alpha * (0.5 * (4 - i) / 3 + 0.05);
+      ctx.fillStyle = color;
+      ctx.beginPath();
+      ctx.arc(x, y, r * i / 3, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.restore();
+  };
+
+  // Частица с затуханием и необязательным свечением.
+  A.drawParticle = function (ctx, q) {
+    var t = Math.max(0, Math.min(1, q.life / (q.maxLife || 1)));
+    ctx.save();
+    ctx.globalAlpha = Math.min(1, t * 1.5);
+    if (q.glow) A.halo(ctx, q.x, q.y, q.size * 3, q.color, 0.35 * t);
+    A.rect(ctx, q.x - q.size / 2, q.y - q.size / 2, q.size, q.size, q.color);
+    ctx.restore();
+  };
+
+  // Ударная волна: расширяющееся кольцо от точки события.
+  A.drawRing = function (ctx, fx) {
+    var t = 1 - Math.max(0, fx.life) / fx.maxLife;
+    ctx.save();
+    ctx.globalAlpha = (1 - t) * 0.75;
+    ctx.strokeStyle = fx.color;
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.arc(Math.round(fx.x), Math.round(fx.y), Math.max(1, Math.round(fx.r)), 0, Math.PI * 2);
+    ctx.stroke();
+    for (var k = 0; k < 4; k++) {
+      var a = k * Math.PI / 2;
+      A.rect(ctx, fx.x + Math.cos(a) * fx.r - 1, fx.y + Math.sin(a) * fx.r - 1, 2, 2, fx.color);
+    }
+    ctx.restore();
+  };
+
+  // Статичное затемнение краёв — глубина кадра, не анимированный фон.
+  A.vignette = function (ctx) {
+    var g = ctx.createRadialGradient(240, 132, 88, 240, 132, 292);
+    g.addColorStop(0, 'rgba(20,14,8,0)');
+    g.addColorStop(0.72, 'rgba(20,14,8,0.07)');
+    g.addColorStop(1, 'rgba(14,9,5,0.32)');
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, 480, 270);
+  };
+
   // Заголовки — античный засечный шрифт, мелкий HUD — моноширинный для читаемости.
   A.font = function (size, bold, mono) {
     // Tahoma/Georgia есть на Windows, Chrome и Яндекс Браузере; DejaVu — запасной вариант на Linux.
@@ -324,6 +374,7 @@
   A.player = function (ctx, p, time, curved) {
     var x = Math.round(p.x), y = Math.round(p.y);
     var run = p.onGround && Math.abs(p.vx) > 0.2 ? Math.sin(time * 14) : 0;
+    if (curved) A.halo(ctx, x + 5, y + 7, 11 + Math.sin(time * 5) * 2, C.gold, 0.34);
     var chiton = curved ? C.gold : C.parchment;
     var cloak = curved ? C.olive : C.terracotta;
     // Плащ, хитон, сандалии, лавровый венок и свиток
@@ -345,6 +396,8 @@
   A.pickup = function (ctx, item, time) {
     var bob = Math.sin(time * 3 + item.x) * 2;
     var x = Math.round(item.x), y = Math.round(item.y + bob);
+    var shine = item.type === 'chakchak' ? '#ffce6a' : '#fff3c8';
+    A.halo(ctx, x, y, 10 + Math.sin(time * 4 + item.x) * 2, shine, 0.5);
     if (item.type === 'chakchak') {
       // амфора с чак-чаком
       A.rect(ctx, x - 3, y - 3, 7, 6, C.terracotta);
@@ -374,6 +427,7 @@
     A.ornament(ctx, x + 3, y - 18, 11, '#6b3f28', 0);
     A.rect(ctx, x + 2, y - 10, 13, 2, C.goldDark);
     if (cp.active) {
+      A.halo(ctx, x + 6, y - 15, 12 + Math.sin(time * 4) * 3, C.goldLight, 0.55);
       ctx.globalAlpha = 0.3 + 0.2 * Math.sin(time * 5);
       A.rect(ctx, x - 4, y - 24, 22, 16, C.goldLight);
       ctx.globalAlpha = 1;
@@ -410,6 +464,7 @@
     A.column(ctx, x + 18, y, 32, C.marbleDim);
     A.rect(ctx, x - 3, y - 8, 22, 4, C.marble);
     A.ornament(ctx, x - 1, y - 7, 18, C.goldDark, 0);
+    if (active) A.halo(ctx, x + 8, y + 15, 14 + Math.sin(time * 3) * 2, '#f5e3ab', 0.55);
     A.rect(ctx, x, y, 16, 30, active ? '#e8c46c' : '#5b4b38');
     A.rect(ctx, x + 3, y + 3, 10, 24, active ? C.goldLight : '#776449');
     A.rect(ctx, x + 5, y + 15, 6, 2, '#6c4a24');
@@ -419,6 +474,7 @@
   A.dragon = function (ctx, b, time) {
     var x = Math.round(b.x), y = Math.round(b.y);
     var flap = Math.sin(time * 8) * 5;
+    A.halo(ctx, x, y, 26 + Math.sin(time * 3) * 4, b.flash > 0 ? '#ffffff' : '#e3c57d', 0.4);
     // бронзовая чешуя, кожаные крылья, золотой гребень
     A.rect(ctx, x - 26, y - 12 + flap, 18, 8, '#6e5a3d');
     A.rect(ctx, x + 8, y - 12 - flap, 18, 8, '#6e5a3d');
@@ -436,6 +492,7 @@
 
   A.fireball = function (ctx, f, time) {
     var x = Math.round(f.x), y = Math.round(f.y);
+    A.halo(ctx, x, y, 8, '#d97846', 0.6);
     A.rect(ctx, x - 3, y - 3, 6, 6, C.terracotta);
     A.rect(ctx, x - 2, y - 4, 4, 8, C.gold);
     A.rect(ctx, x - 1, y - 1, 2, 2, C.goldLight);
@@ -445,6 +502,7 @@
   A.idealPoint = function (ctx, p, time, strength) {
     var x = Math.round(p.x), y = Math.round(p.y);
     var r = 5 + Math.sin(time * 4) * 2 + strength * 5;
+    A.halo(ctx, x, y, r + 8, C.goldLight, 0.22 + strength * 0.35);
     ctx.strokeStyle = 'rgba(245,227,171,' + (0.28 + strength * 0.5) + ')';
     ctx.lineWidth = 1;
     ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.stroke();

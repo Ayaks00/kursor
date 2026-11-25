@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Лобачевский: Кривая Казань — пиксельный платформер</title>
+  <meta name="description" content="Пиксельный платформер о геометрии Лобачевского и Казани: три уровня и босс Зилант.">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div id="frame">
+    <canvas id="game" width="480" height="270" aria-label="Игра Лобачевский: Кривая Казань"></canvas>
+    <div id="tap-hint">Нажмите, чтобы включить звук и начать игру</div>
+  </div>
+  <noscript>Для игры включите JavaScript.</noscript>
+
+  <!-- Классические скрипты: игра запускается и с file://, без сборщиков и сервера. -->
+  <script src="src/sfx-data.js"></script>
+  <script src="src/audio.js"></script>
+  <script src="src/input.js"></script>
+  <script src="src/art.js"></script>
+  <script src="src/levels.js"></script>
+  <script src="src/game.js"></script>
+  <script src="src/main.js"></script>
+</body>
+</html>

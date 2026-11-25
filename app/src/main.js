@@ -13,6 +13,8 @@
   window.KZ.game = game;
   window.KZ.ui = ui;
 
+  if (!game.save.lang) game.setState('language');
+
   function unlock() {
     audio.unlock();
     hint.classList.add('hidden');

@@ -14,6 +14,7 @@
     this.menuList = document.getElementById('menu-list');
     this.pauseList = document.getElementById('pause-list');
     this.levelList = document.getElementById('level-list');
+    this.languageList = document.getElementById('language-list');
     this.hud = document.getElementById('hud');
     this.toast = document.getElementById('toast');
     this.el = {
@@ -46,6 +47,7 @@
 
     this.menuSignature = '';
     this.levelSignature = '';
+    this.languageSignature = '';
     this.quizSignature = '';
     this.buildPauseButtons();
     this.applyLanguage();
@@ -98,6 +100,18 @@
     });
   };
 
+  UI.prototype.buildLanguageButtons = function () {
+    var self = this;
+    var items = this.game.languageItems();
+    var signature = items.map(function (it) { return it.id; }).join('|');
+    if (signature === this.languageSignature) return;
+    this.languageSignature = signature;
+    this.languageList.innerHTML = '';
+    this.languageButtons = items.map(function (it) {
+      return self.makeButton(it.label, function () { self.game.chooseLang(it.id); }, self.languageList);
+    });
+  };
+
   UI.prototype.buildLevelButtons = function () {
     var self = this;
     var items = this.game.levelItems();
@@ -138,6 +152,7 @@
     }
     this.menuSignature = '';
     this.levelSignature = '';
+    this.languageSignature = '';
     this.quizSignature = '';
   };
 
@@ -177,6 +192,10 @@
     if (state === 'levels') {
       this.buildLevelButtons();
       this.highlight(this.levelButtons, game.menuIndex);
+    }
+    if (state === 'language') {
+      this.buildLanguageButtons();
+      this.highlight(this.languageButtons, game.menuIndex);
     }
     if (state === 'pause') this.highlight(this.pauseButtons, game.menuIndex);
     if (state === 'quiz') {

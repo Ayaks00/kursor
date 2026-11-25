@@ -751,47 +751,112 @@
 
   A.dragon = function (ctx, b, time) {
     A.at(ctx, b.x, b.y, function (ctx) {
-      var x = 0, y = 0;
-      var flap = Math.sin(time * 8) * 5;
-      A.halo(ctx, 0, 0, 26 + Math.sin(time * 3) * 4, b.flash > 0 ? '#ffffff' : '#e3c57d', 0.4);
-      
-      A.rect(ctx, -26, -12 + flap, 18, 8, '#6e5a3d');
-      A.rect(ctx, -24, -10 + flap, 14, 1, '#a28859');
-      A.rect(ctx, -22, -8 + flap, 12, 1, '#a28859');
-      A.rect(ctx, -20, -6 + flap, 10, 1, '#a28859');
-      A.rect(ctx, 8, -12 - flap, 18, 8, '#6e5a3d');
-      A.rect(ctx, 10, -10 - flap, 14, 1, '#a28859');
-      A.rect(ctx, 12, -8 - flap, 12, 1, '#a28859');
-      A.rect(ctx, 14, -6 - flap, 10, 1, '#a28859');
-      A.rect(ctx, -16, -4, 6, 5, '#5d7550');
-      A.rect(ctx, -14, -10, 28, 17, '#6f8b5e');
-      A.rect(ctx, -12, -8, 24, 13, '#7d9869');
-      A.rect(ctx, 12, -10, 13, 12, '#7fa06b');
-      A.rect(ctx, 23, -6, 6, 5, '#92b27a');
-      A.rect(ctx, 28, -5, 3, 3, '#9db884');
-      A.rect(ctx, 10, -15, 4, 6, C.goldLight);
-      A.rect(ctx, 18, -15, 4, 6, C.goldLight);
-      A.rect(ctx, 11, -17, 2, 3, C.gold);
-      A.rect(ctx, 19, -17, 2, 3, C.gold);
-      A.rect(ctx, 17, -7, 3, 3, b.flash > 0 ? '#ffffff' : C.goldLight);
-      A.rect(ctx, 18, -6, 1, 1, C.ink);
-      A.rect(ctx, 24, -3, 2, 2, C.ink);
-      A.rect(ctx, 26, 0, 4, 1, C.parchment);
-      A.rect(ctx, -6, 9, 5, 9, '#567049');
-      A.rect(ctx, 5, 9, 5, 9, '#567049');
-      A.rect(ctx, -5, 16, 7, 2, '#3f563a');
-      A.rect(ctx, 6, 16, 7, 2, '#3f563a');
-      for (var i = 0; i < 4; i++) {
-        A.rect(ctx, -10 + i * 6, -2, 2, 2, C.gold);
-        A.rect(ctx, -9 + i * 6, 3, 2, 2, '#a8bd7c');
+      var flap = Math.sin(time * 7.5) * 4;
+      var breath = 0.5 + 0.5 * Math.sin(time * 4);
+      var hurt = b.flash > 0;
+      var ember = hurt ? '#ffffff' : '#f5d36a';
+      function poly(points, fill, stroke, lw) {
+        ctx.beginPath();
+        ctx.moveTo(points[0][0], points[0][1]);
+        for (var i = 1; i < points.length; i++) ctx.lineTo(points[i][0], points[i][1]);
+        ctx.closePath();
+        ctx.fillStyle = fill; ctx.fill();
+        if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = lw || 0.4; ctx.stroke(); }
       }
-      for (var sc = 0; sc < 9; sc++) {
-        A.fineRect(ctx, -11 + sc * 2.7, -7 + (sc % 3) * 4.5, 0.5, 0.5, '#d9e6b0');
-        A.fineRect(ctx, -10 + sc * 2.7, 6 + (sc % 2) * 2, 0.25, 0.25, '#3f563a');
+
+      A.halo(ctx, 0, -2, 28 + breath * 4, hurt ? '#ffffff' : '#e3c57d', 0.38);
+      ctx.globalAlpha = 0.28;
+      A.rect(ctx, -18, 19, 38, 2, '#17150f');
+      ctx.globalAlpha = 1;
+
+      poly([[-10, -6], [-24, -19 + flap], [-38, -25 + flap], [-35, -9 + flap], [-24, -2], [-12, 3]],
+        hurt ? '#91a88a' : '#4a6142', '#9ab080', 0.5);
+      poly([[-12, -5], [-25, -17 + flap], [-34, -21 + flap], [-30, -9 + flap], [-22, -4]],
+        hurt ? '#b6c7a6' : '#688458', null);
+      ctx.strokeStyle = C.gold; ctx.lineWidth = 0.5;
+      ctx.beginPath();
+      ctx.moveTo(-11, -4); ctx.lineTo(-36, -23 + flap);
+      ctx.moveTo(-11, -2); ctx.lineTo(-35, -12 + flap);
+      ctx.moveTo(-11, 0); ctx.lineTo(-25, -3 + flap);
+      ctx.stroke();
+      for (var wc = 0; wc < 5; wc++) {
+        A.fineRect(ctx, -16 - wc * 4, -13 + flap + (wc % 2) * 4, 0.7, 0.7, '#e3c57d');
       }
-      A.fineRect(ctx, 17.75, -6.75, 0.5, 0.5, '#ffffff');
-      A.fineRect(ctx, 24.25, -2.75, 0.5, 0.5, '#ffffff');
-      A.fineRect(ctx, 25.25, 0.25, 0.5, 0.5, '#fff3c8');
+
+      poly([[10, -6], [24, -19 - flap], [38, -25 - flap], [35, -9 - flap], [24, -2], [12, 3]],
+        hurt ? '#91a88a' : '#4a6142', '#9ab080', 0.5);
+      poly([[12, -5], [25, -17 - flap], [34, -21 - flap], [30, -9 - flap], [22, -4]],
+        hurt ? '#b6c7a6' : '#688458', null);
+      ctx.strokeStyle = C.gold;
+      ctx.beginPath();
+      ctx.moveTo(11, -4); ctx.lineTo(36, -23 - flap);
+      ctx.moveTo(11, -2); ctx.lineTo(35, -12 - flap);
+      ctx.moveTo(11, 0); ctx.lineTo(25, -3 - flap);
+      ctx.stroke();
+      for (var wc2 = 0; wc2 < 5; wc2++) {
+        A.fineRect(ctx, 16 + wc2 * 4, -13 - flap + (wc2 % 2) * 4, 0.7, 0.7, '#e3c57d');
+      }
+
+      for (var t = 0; t < 5; t++) {
+        var ty = -1 + Math.sin(time * 3 + t * 0.7) * 1.2;
+        A.rect(ctx, -18 - t * 4, ty, 5, 5 - t * 0.4, hurt ? '#a9bfa0' : (t % 2 ? '#5d7550' : '#4d6544'));
+        A.rect(ctx, -19 - t * 4, ty - 2, 1.5, 2, C.gold);
+      }
+
+      A.rect(ctx, -14, -8, 28, 17, hurt ? '#b7cbaa' : '#5b7550');
+      A.rect(ctx, -12, -10, 24, 15, hurt ? '#cddcc0' : '#6f8b5e');
+      A.rect(ctx, -9, -8, 18, 11, hurt ? '#dfe9d2' : '#7d9869');
+      for (var belly = 0; belly < 6; belly++) {
+        A.rect(ctx, -8 + belly * 3, 4, 2.4, 3, belly % 2 ? '#c6b27e' : '#d9c78f');
+        A.fineRect(ctx, -8 + belly * 3, 4.25, 2, 0.35, '#fff3c8');
+      }
+      for (var ridge = 0; ridge < 8; ridge++) {
+        A.rect(ctx, -12 + ridge * 3, -11 + (ridge % 2), 2, 2, ridge % 2 ? C.gold : '#d9e6b0');
+      }
+      for (var sc = 0; sc < 12; sc++) {
+        var sx = -10 + (sc % 6) * 3.5;
+        var sy = -6 + Math.floor(sc / 6) * 5;
+        A.fineRect(ctx, sx, sy, 1.2, 1.2, '#d9e6b0');
+        A.fineRect(ctx, sx + 0.4, sy + 0.4, 0.5, 0.5, '#fff8dd');
+      }
+
+      A.rect(ctx, -9, 8, 6, 9, hurt ? '#a9bfa0' : '#4f6a46');
+      A.rect(ctx, 5, 8, 6, 9, hurt ? '#a9bfa0' : '#4f6a46');
+      A.rect(ctx, -9, 16, 7, 2, '#3f563a');
+      A.rect(ctx, 5, 16, 7, 2, '#3f563a');
+      for (var claw = 0; claw < 3; claw++) {
+        A.rect(ctx, -9 + claw * 2.4, 18, 1.2, 2, '#f5e3ab');
+        A.rect(ctx, 5 + claw * 2.4, 18, 1.2, 2, '#f5e3ab');
+      }
+
+      A.rect(ctx, 10, -10, 13, 12, hurt ? '#d3e0c6' : '#7fa06b');
+      A.rect(ctx, 22, -8, 8, 7, hurt ? '#dfe9d2' : '#8fae72');
+      A.rect(ctx, 28, -6, 4, 3, hurt ? '#eaf1de' : '#9db884');
+      poly([[22, -2], [31, -2], [30, 0], [23, 1]], '#8fae72', '#4f6a46', 0.35);
+      A.rect(ctx, 23, -1, 9, 2, '#4f6a46');
+      for (var tooth = 0; tooth < 4; tooth++) A.rect(ctx, 24 + tooth * 2, 1, 1, 2, '#fff3c8');
+      A.rect(ctx, 30, -5, 1, 1, '#2a1c12');
+
+      poly([[10, -10], [9, -19], [13, -13]], C.goldLight, C.gold, 0.35);
+      poly([[18, -10], [19, -19], [22, -13]], C.goldLight, C.gold, 0.35);
+      poly([[13, -10], [14, -16], [17, -11]], '#c8b98f', null);
+      ctx.strokeStyle = C.goldLight; ctx.lineWidth = 0.6;
+      ctx.beginPath(); ctx.arc(20, -13, 2.2, 0.3, Math.PI * 1.8); ctx.stroke();
+      A.halo(ctx, 18.5, -5.5, 3, ember, 0.35);
+
+      A.rect(ctx, 16, -7, 5, 4, '#2a1c12');
+      A.rect(ctx, 17, -6, 3, 2, ember);
+      A.fineRect(ctx, 17.4, -5.6, 0.8, 0.8, '#ffffff');
+      A.rect(ctx, 26, -7, 3, 2, '#2a1c12');
+      A.halo(ctx, 31, -4, 3 + breath * 3, ember, 0.45);
+
+      for (var orn = 0; orn < 4; orn++) {
+        A.fineRect(ctx, -14 + orn * 6, 1, 2, 1, C.gold);
+        A.fineRect(ctx, -13 + orn * 6, -5, 1, 1, '#e3c57d');
+      }
+      A.fineRect(ctx, 12, -9, 6, 0.4, '#fff8dd');
+      A.fineRect(ctx, 23, -7, 5, 0.4, '#fff8dd');
+      A.fineRect(ctx, 28, -5, 3, 0.4, '#fff8dd');
     });
   };
 

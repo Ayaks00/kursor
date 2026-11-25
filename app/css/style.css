@@ -139,6 +139,10 @@ h1, h2 {
 .panel-screen[data-screen="intro"] .panel { width: calc(var(--u) * 432); text-align: left; }
 .panel-screen[data-screen="intro"] h2 { font-size: calc(var(--u) * 13); }
 .panel-screen[data-screen="intro"] .screen-hint { text-align: center; }
+[data-screen="language"] .panel { width: calc(var(--u) * 224); text-align: center; }
+[data-screen="language"] .menu-list { width: 100%; margin-top: calc(var(--u) * 4); }
+[data-screen="language"] .game-btn { height: calc(var(--u) * 22); font-size: calc(var(--u) * 11); }
+
 [data-screen="quiz"] .panel { width: calc(var(--u) * 340); text-align: left; }
 [data-screen="quiz"] .menu-list { width: 100%; margin-top: calc(var(--u) * 2); }
 [data-screen="quiz"] .game-btn { height: calc(var(--u) * 18); font-size: calc(var(--u) * 9); }

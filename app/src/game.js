@@ -68,7 +68,7 @@
   Game.prototype.loadSave = function () {
     var raw = localStorage.getItem(SAVE_KEY);
     if (raw) return JSON.parse(raw);
-    return { unlocked: 0, best: {}, chak: {}, quiz: {}, lang: 'ru' };
+    return { unlocked: 0, best: {}, chak: {}, quiz: {}, lang: '' };
   };
 
   Game.prototype.writeSave = function () {
@@ -79,7 +79,7 @@
     this.state = s;
     this.stateTime = 0;
     if (s === 'menu') this.menuIndex = 0;
-    if (s === 'menu' || s === 'levels') this.audio.setTheme('menu');
+    if (s === 'menu' || s === 'levels' || s === 'language') this.audio.setTheme('menu');
     if (s === 'play') {
       var themes = ['bauman', 'kfu', 'observatory', 'dvoika'];
       this.audio.setTheme(this.level.boss ? 'boss' : (themes[this.levelIndex] || 'game'));
@@ -271,7 +271,8 @@
     }
     if (this.toastTime > 0) this.toastTime -= dt;
 
-    if (this.state === 'menu') this.updateMenu();
+    if (this.state === 'language') this.updateLanguage();
+    else if (this.state === 'menu') this.updateMenu();
     else if (this.state === 'levels') this.updateLevelMenu();
     else if (this.state === 'how') {
       if (this.input.confirmPressed() || this.input.mouse.clicked) this.setState('menu');
@@ -333,6 +334,31 @@
         }
       }
     }
+  };
+
+  Game.prototype.languageItems = function () {
+    return [
+      { id: 'ru', label: 'РУССКИЙ' },
+      { id: 'en', label: 'ENGLISH' },
+      { id: 'tt', label: 'ТАТАРЧА' }
+    ];
+  };
+
+  Game.prototype.updateLanguage = function () {
+    var items = this.languageItems();
+    if (this.input.upPressed()) this.menuIndex = (this.menuIndex + items.length - 1) % items.length;
+    if (this.input.downPressed()) this.menuIndex = (this.menuIndex + 1) % items.length;
+    if (this.input.confirmPressed()) this.chooseLang(items[this.menuIndex].id);
+  };
+
+  Game.prototype.chooseLang = function (lang) {
+    if (KZ.LANGS.indexOf(lang) < 0) return;
+    this.audio.play('click', 0.5);
+    KZ.setLang(lang);
+    this.save.lang = lang;
+    this.writeSave();
+    if (this.ui) this.ui.applyLanguage();
+    this.setState('menu');
   };
 
   Game.prototype.menuItems = function () {
@@ -825,7 +851,7 @@
     s.save();
     
     if (!warping) s.translate(ox, oy);
-    if (this.state === 'menu' || this.state === 'how' || this.state === 'levels') {
+    if (this.state === 'menu' || this.state === 'how' || this.state === 'levels' || this.state === 'language') {
       A.backdrop(s, KZ.LEVELS[4], 0, 0, this.time);
       s.fillStyle = 'rgba(9,9,22,0.55)';
       s.fillRect(0, 0, W, H);
@@ -876,7 +902,7 @@
       c.restore();
     }
     
-    if (this.state !== 'menu' && this.state !== 'levels' && this.state !== 'how') {
+    if (this.state !== 'menu' && this.state !== 'levels' && this.state !== 'how' && this.state !== 'language') {
       var tints = ['rgba(214,145,70,0.045)', 'rgba(118,142,190,0.05)', 'rgba(96,138,190,0.055)', 'rgba(190,150,108,0.045)', 'rgba(198,86,52,0.055)'];
       c.fillStyle = tints[this.levelIndex % tints.length];
       c.fillRect(0, 0, W, H);

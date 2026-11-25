@@ -1,4 +1,4 @@
-/* Звук: CC0-сэмплы из CREDITS.md + процедурная chiptune-музыка собственного генерации. */
+/* Звук: CC0-сэмплы (см. README.md) + процедурная chiptune-музыка. */
 (function (KZ) {
   'use strict';
 

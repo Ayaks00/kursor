@@ -13,7 +13,7 @@ FILES = [
     'css/style.css',
     'src/bg-data.js', 'src/sfx-data.js', 'src/audio.js', 'src/input.js', 'src/art.js',
     'src/levels.js', 'src/game.js', 'src/ui.js', 'src/main.js',
-    'README.md', 'CREDITS.md',
+    'README.md', 'CREDITS.md', 'docs/qa-answers.md',
     'assets/bg/bauman.png', 'assets/bg/kfu-main.png',
     'assets/bg/observatory.png', 'assets/bg/kremlin.png',
     'assets/sfx/jump.ogg', 'assets/sfx/coin.ogg', 'assets/sfx/fall.ogg',

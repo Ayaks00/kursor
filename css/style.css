@@ -216,6 +216,7 @@ h1, h2 {
 }
 #hint-box.active { display: block; }
 #hint-box .keys-line { color: var(--gold-light); }
+#hint-box .keys-line.dim { color: var(--dim); font-size: calc(var(--u) * 8); }
 #hint-box p { margin-top: calc(var(--u) * 3); color: var(--parchment); }
 
 #toast {

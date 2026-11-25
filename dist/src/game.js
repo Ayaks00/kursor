@@ -92,6 +92,7 @@
     this.deaths = 0;
     this.switches = 0;
     this.hintTime = lv.id === 1 ? 14 : 0;
+    this.hintDismissed = false;
     this.particles = [];
     this.effects = [];
     this.shakeTime = 0; this.flashTime = 0;
@@ -352,6 +353,14 @@
     this.timeInLevel += dt;
     if (this.invuln > 0) this.invuln -= dt;
     if (this.hintTime > 0) this.hintTime -= dt;
+    // Пробел при показанной подсказке только закрывает её:
+    // игрок не должен нечаянно прыгнуть, убирая окно с экрана.
+    if (this.hintTime > 0 && inp.jumpPressed()) {
+      this.hintTime = 0;
+      this.hintDismissed = true;
+      inp.consume('Space'); inp.consume('ArrowUp'); inp.consume('KeyW');
+      this.audio.play('click', 0.3);
+    }
 
     var lv = this.level, p = this.player;
     var dir = (inp.right() ? 1 : 0) - (inp.left() ? 1 : 0);

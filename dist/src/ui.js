@@ -130,7 +130,7 @@
       var boss = game.boss;
       this.el.bossBox.classList.toggle('active', !!boss && !boss.dead);
       if (boss) this.el.bossFill.style.width = Math.max(0, boss.hp / 3 * 100) + '%';
-      var showHint = state === 'play' && game.hintTime > 0;
+      var showHint = state === 'play' && game.hintTime > 0 && !game.hintDismissed;
       this.el.hintBox.classList.toggle('active', showHint);
       if (showHint) this.el.hintTask.textContent = level.task;
     }

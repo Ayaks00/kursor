@@ -226,9 +226,8 @@
     if (this.toastTime > 0) this.toastTime -= dt;
 
     if (this.state === 'menu') this.updateMenu();
-    else if (this.state === 'how' || this.state === 'about' || this.state === 'exit') {
-      if (this.input.confirmPressed() || this.input.mouse.clicked ||
-          (this.state === 'about' && this.input.pausePressed())) this.setState('menu');
+    else if (this.state === 'how' || this.state === 'exit') {
+      if (this.input.confirmPressed() || this.input.mouse.clicked) this.setState('menu');
     } else if (this.state === 'intro') {
       if (this.input.confirmPressed()) this.setState('play');
     } else if (this.state === 'play') this.updatePlay(dt);
@@ -292,7 +291,6 @@
     var list = [{ id: 'new', label: 'НОВАЯ ИГРА' }];
     if (this.save.unlocked > 0) list.push({ id: 'continue', label: 'ПРОДОЛЖИТЬ' });
     list.push({ id: 'how', label: 'КАК ИГРАТЬ' });
-    list.push({ id: 'about', label: 'ОБ ИГРЕ' });
     list.push({ id: 'exit', label: 'ВЫХОД' });
     return list;
   };
@@ -304,7 +302,6 @@
     } else if (id === 'continue') {
       this.loadLevel(clamp(this.save.unlocked, 0, KZ.LEVELS.length - 1));
     } else if (id === 'how') this.setState('how');
-    else if (id === 'about') this.setState('about');
     else if (id === 'exit') this.setState('exit');
   };
 
@@ -322,14 +319,13 @@
 
   Game.prototype.updatePause = function () {
     if (this.input.pausePressed()) { this.setState('play'); return; }
-    if (this.input.upPressed()) this.menuIndex = (this.menuIndex + 3) % 4;
-    if (this.input.downPressed()) this.menuIndex = (this.menuIndex + 1) % 4;
+    if (this.input.upPressed()) this.menuIndex = (this.menuIndex + 2) % 3;
+    if (this.input.downPressed()) this.menuIndex = (this.menuIndex + 1) % 3;
     if (this.input.confirmPressed()) {
       this.audio.play('click', 0.4);
       if (this.menuIndex === 0) this.setState('play');
       else if (this.menuIndex === 1) this.restartLevel();
       else if (this.menuIndex === 2) this.audio.toggleMute();
-      else this.setState('menu');
     }
   };
 
@@ -593,7 +589,7 @@
     s.save();
     // При схождении тряска применяется при копировании полос; здесь её нет.
     if (!warping) s.translate(ox, oy);
-    if (this.state === 'menu' || this.state === 'how' || this.state === 'about' || this.state === 'exit') {
+    if (this.state === 'menu' || this.state === 'how' || this.state === 'exit') {
       A.backdrop(s, KZ.LEVELS[3], 0, this.time);
       s.fillStyle = 'rgba(9,9,22,0.55)';
       s.fillRect(0, 0, W, H);

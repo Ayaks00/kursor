@@ -30,8 +30,7 @@
       introTask: document.getElementById('intro-task'),
       completeName: document.getElementById('complete-name'),
       completeTime: document.getElementById('complete-time'),
-      completeStats: document.getElementById('complete-stats'),
-      victoryStats: document.getElementById('victory-stats')
+      completeStats: document.getElementById('complete-stats')
     };
 
     this.menuSignature = '';
@@ -40,11 +39,11 @@
     window.addEventListener('resize', function () { self.resize(); });
     if (window.requestAnimationFrame) window.requestAnimationFrame(function () { self.resize(); });
 
-    // Клик по экранам «Как играть», «Об игре», «Выход» и титрам возвращает в меню.
+    // Клик по экранам «Как играть», «Выход» и титрам возвращает в меню.
     this.root.addEventListener('click', function (e) {
       if (e.target && e.target.tagName === 'BUTTON') return;
       var st = self.game.state;
-      if (st === 'how' || st === 'about' || st === 'exit') self.game.setState('menu');
+      if (st === 'how' || st === 'exit') self.game.setState('menu');
       else if (st === 'victory' && self.game.stateTime > 1.5) self.game.setState('menu');
     });
   }
@@ -83,8 +82,7 @@
     var actions = [
       ['ПРОДОЛЖИТЬ', function () { self.game.setState('play'); }],
       ['ПЕРЕЗАПУСК УРОВНЯ', function () { self.game.restartLevel(); }],
-      ['ЗВУК ВКЛ/ВЫКЛ', function () { self.game.audio.toggleMute(); }],
-      ['В ГЛАВНОЕ МЕНЮ', function () { self.game.setState('menu'); }]
+      ['ЗВУК ВКЛ/ВЫКЛ', function () { self.game.audio.toggleMute(); }]
     ];
     this.pauseButtons = actions.map(function (a) {
       return self.makeButton(a[0], a[1], self.pauseList);
@@ -139,10 +137,6 @@
       this.el.completeName.textContent = game.level.name;
       this.el.completeTime.textContent = 'ВРЕМЯ: ' + game.timeInLevel.toFixed(1) + ' с';
       this.el.completeStats.textContent = 'ПЕРЕКЛЮЧЕНИЙ: ' + game.switches + '   СМЕРТЕЙ: ' + game.deaths;
-    }
-
-    if (state === 'victory') {
-      this.el.victoryStats.textContent = 'ПРОЙДЕНО УРОВНЕЙ: 4 · СМЕРТЕЙ: ' + game.deaths;
     }
 
     var showToast = game.toastTime > 0;

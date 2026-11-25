@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Лобачевский: Кривая Казань — пиксельный платформер</title>
+  <title data-i18n="LOBACHEVSKY_TITLE">Лобачевский: Кривая Казань — пиксельный платформер</title>
   <meta name="description" content="Пиксельный платформер о геометрии Лобачевского и Казани: три уровня и босс Зилант.">
   <link rel="stylesheet" href="css/style.css">
 </head>
@@ -16,37 +16,37 @@
       
       <div id="ui">
         <section class="screen" data-screen="menu">
-          <h1 class="title">ЛОБАЧЕВСКИЙ</h1>
-          <div class="subtitle">КРИВАЯ КАЗАНЬ</div>
+          <h1 class="title" data-i18n="ЛОБАЧЕВСКИЙ">ЛОБАЧЕВСКИЙ</h1>
+          <div class="subtitle" data-i18n="КРИВАЯ КАЗАНЬ">КРИВАЯ КАЗАНЬ</div>
           <div class="menu-list" id="menu-list"></div>
           <div class="controls">
-            <div>WASD / СТРЕЛКИ — ДВИЖЕНИЕ · ПРОБЕЛ — ПРЫЖОК</div>
-            <div>Q / SHIFT — КРИВИЗНА · ESC — ПАУЗА · M — ЗВУК</div>
+            <div data-i18n="WASD / СТРЕЛКИ — ДВИЖЕНИЕ · ПРОБЕЛ — ПРЫЖОК">WASD / СТРЕЛКИ — ДВИЖЕНИЕ · ПРОБЕЛ — ПРЫЖОК</div>
+            <div data-i18n="Q / SHIFT — КРИВИЗНА · ESC — ПАУЗА · M — ЗВУК">Q / SHIFT — КРИВИЗНА · ESC — ПАУЗА · M — ЗВУК</div>
           </div>
         </section>
 
         <section class="screen" data-screen="levels">
-          <h2 class="level-title">ВЫБОР УРОВНЯ</h2>
+          <h2 class="level-title" data-i18n="ВЫБОР УРОВНЯ">ВЫБОР УРОВНЯ</h2>
           <div class="level-list" id="level-list"></div>
-          <div class="level-hint">ENTER — ВЫБРАТЬ · ESC — НАЗАД</div>
+          <div class="level-hint" data-i18n="ENTER — ВЫБРАТЬ · ESC — НАЗАД">ENTER — ВЫБРАТЬ · ESC — НАЗАД</div>
         </section>
 
         <section class="screen panel-screen" data-screen="how">
           <div class="panel">
-            <h2>КАК ИГРАТЬ</h2>
+            <h2 data-i18n="КАК ИГРАТЬ">КАК ИГРАТЬ</h2>
             <div class="rule"></div>
             <div class="keys">
-              <div><b>← →  или  A D</b><span>движение</span></div>
-              <div><b>ПРОБЕЛ / W / ↑</b><span>прыжок, выше при удержании</span></div>
-              <div><b>Q  или  SHIFT</b><span>переключить геометрию</span></div>
-              <div><b>ESC / P</b><span>пауза, рестарт, звук</span></div>
-              <div><b>R</b><span>перезапуск уровня</span></div>
-              <div><b>M</b><span>звук вкл / выкл</span></div>
-              <div><b>ENTER</b><span>старт и продолжение</span></div>
+              <div><b data-i18n="← →  или  A D">← →  или  A D</b><span data-i18n="движение">движение</span></div>
+              <div><b data-i18n="ПРОБЕЛ / W / ↑">ПРОБЕЛ / W / ↑</b><span data-i18n="прыжок, выше при удержании">прыжок, выше при удержании</span></div>
+              <div><b data-i18n="Q  или  SHIFT">Q  или  SHIFT</b><span data-i18n="переключить геометрию">переключить геометрию</span></div>
+              <div><b data-i18n="ESC / P">ESC / P</b><span data-i18n="пауза, рестарт, звук">пауза, рестарт, звук</span></div>
+              <div><b data-i18n="R">R</b><span data-i18n="перезапуск уровня">перезапуск уровня</span></div>
+              <div><b data-i18n="M">M</b><span data-i18n="звук вкл / выкл">звук вкл / выкл</span></div>
+              <div><b data-i18n="ENTER">ENTER</b><span data-i18n="старт и продолжение">старт и продолжение</span></div>
             </div>
             <div class="rule"></div>
-            <p>В кривом мире параллельные навесы сходятся в идеальной точке и становятся платформами. Прыгай, жми Q в воздухе и собирай чак-чак.</p>
-            <div class="screen-hint">ENTER / КЛИК — вернуться в меню</div>
+            <p data-i18n="В кривом мире параллельные навесы сходятся в идеальной точке и становятся платформами. Прыгай, жми Q в воздухе и собирай чак-чак.">В кривом мире параллельные навесы сходятся в идеальной точке и становятся платформами. Прыгай, жми Q в воздухе и собирай чак-чак.</p>
+            <div class="screen-hint" data-i18n="ENTER / КЛИК — вернуться в меню">ENTER / КЛИК — вернуться в меню</div>
           </div>
         </section>
 
@@ -59,32 +59,44 @@
             <div class="rule"></div>
             <p id="intro-fact"></p>
             <p class="accent" id="intro-task"></p>
-            <div class="screen-hint">ENTER / ПРОБЕЛ — старт</div>
+            <div class="screen-hint" data-i18n="ENTER / ПРОБЕЛ — старт">ENTER / ПРОБЕЛ — старт</div>
           </div>
         </section>
 
         <section class="screen" data-screen="pause">
           <div class="panel pause-panel">
-            <h2>ПАУЗА</h2>
+            <h2 data-i18n="ПАУЗА">ПАУЗА</h2>
             <div class="menu-list" id="pause-list"></div>
           </div>
         </section>
 
         <section class="screen" data-screen="death">
           <div class="death-box">
-            <h2>СИНГУЛЯРНОСТЬ!</h2>
-            <p>Возврат к чекпоинту...</p>
-            <div class="screen-hint">ENTER — быстрее</div>
+            <h2 data-i18n="СИНГУЛЯРНОСТЬ!">СИНГУЛЯРНОСТЬ!</h2>
+            <p data-i18n="Возврат к чекпоинту...">Возврат к чекпоинту...</p>
+            <div class="screen-hint" data-i18n="ENTER — быстрее">ENTER — быстрее</div>
           </div>
         </section>
 
         <section class="screen" data-screen="complete">
           <div class="panel result-panel">
-            <h2>УРОВЕНЬ ПРОЙДЕН</h2>
+            <h2 data-i18n="УРОВЕНЬ ПРОЙДЕН">УРОВЕНЬ ПРОЙДЕН</h2>
             <div class="accent" id="complete-name"></div>
             <p id="complete-time"></p>
             <p id="complete-stats"></p>
-            <div class="screen-hint">ENTER — дальше</div>
+            <div class="screen-hint" data-i18n="ENTER — дальше">ENTER — дальше</div>
+          </div>
+        </section>
+
+        <section class="screen panel-screen" data-screen="quiz">
+          <div class="panel quiz-panel">
+            <h2 data-i18n="МИНИ-ОПРОС">МИНИ-ОПРОС</h2>
+            <div class="accent" id="quiz-level"></div>
+            <div class="rule"></div>
+            <p id="quiz-question"></p>
+            <div class="menu-list" id="quiz-list"></div>
+            <p id="quiz-feedback" class="quiz-feedback"></p>
+            <div class="screen-hint" data-i18n="ВЫБЕРИ ОТВЕТ">ВЫБЕРИ ОТВЕТ</div>
           </div>
         </section>
 
@@ -95,24 +107,24 @@
           <div id="chakchak-box">
             <span class="chak-glyph"></span>
             <div class="chak-data">
-              <div class="chak-label">ЧАК-ЧАК</div>
+              <div class="chak-label" data-i18n="ЧАК-ЧАК">ЧАК-ЧАК</div>
               <div class="chak-count"><b id="chak-count">0</b><span id="chak-total">/ 9</span></div>
               <div class="chak-meter"><i id="chak-fill"></i></div>
             </div>
           </div>
           <div id="curv-box">
-            <span id="curv-label">ПЛОСКОСТЬ</span>
+            <span id="curv-label" data-i18n="ПЛОСКОСТЬ">ПЛОСКОСТЬ</span>
             <div class="meter"><i id="curv-fill"></i></div>
             <span class="key">Q</span>
           </div>
           <div id="boss-box">
-            <div>ЗИЛАНТ</div>
+            <div data-i18n="ЗИЛАНТ">ЗИЛАНТ</div>
             <div class="meter"><i id="boss-fill"></i></div>
-            <div class="hint">УДАРЬ В КРИВОМ МИРЕ</div>
+            <div class="hint" data-i18n="УДАРЬ В КРИВОМ МИРЕ">УДАРЬ В КРИВОМ МИРЕ</div>
           </div>
           <div id="hint-box">
-            <div class="keys-line">← → — идти · ПРОБЕЛ — прыжок · Q — кривизна</div>
-            <div class="keys-line dim">ПРОБЕЛ — скрыть эту подсказку</div>
+            <div class="keys-line" data-i18n="← → — идти · ПРОБЕЛ — прыжок · Q — кривизна">← → — идти · ПРОБЕЛ — прыжок · Q — кривизна</div>
+            <div class="keys-line dim" data-i18n="ПРОБЕЛ — скрыть эту подсказку">ПРОБЕЛ — скрыть эту подсказку</div>
             <p id="hint-task"></p>
           </div>
         </div>
@@ -120,11 +132,12 @@
         <div id="toast"></div>
       </div>
     </div>
-    <div id="tap-hint">Нажмите, чтобы включить звук и начать игру</div>
+    <div id="tap-hint" data-i18n="Нажмите, чтобы включить звук и начать игру">Нажмите, чтобы включить звук и начать игру</div>
   </div>
-  <noscript>Для игры включите JavaScript.</noscript>
+  <noscript data-i18n="Для игры включите JavaScript.">Для игры включите JavaScript.</noscript>
 
   
+  <script src="src/i18n.js"></script>
   <script src="src/sfx-data.js"></script>
   <script src="src/audio.js"></script>
   <script src="src/input.js"></script>

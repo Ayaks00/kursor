@@ -139,6 +139,13 @@ h1, h2 {
 .panel-screen[data-screen="intro"] .panel { width: calc(var(--u) * 432); text-align: left; }
 .panel-screen[data-screen="intro"] h2 { font-size: calc(var(--u) * 13); }
 .panel-screen[data-screen="intro"] .screen-hint { text-align: center; }
+[data-screen="quiz"] .panel { width: calc(var(--u) * 340); text-align: left; }
+[data-screen="quiz"] .menu-list { width: 100%; margin-top: calc(var(--u) * 2); }
+[data-screen="quiz"] .game-btn { height: calc(var(--u) * 18); font-size: calc(var(--u) * 9); }
+.quiz-feedback { min-height: calc(var(--u) * 10); color: #a9e48f; opacity: 0; }
+.quiz-feedback.active { opacity: 1; }
+.quiz-feedback.wrong { color: #e89a86; }
+
 .pause-panel { width: calc(var(--u) * 200) !important; text-align: center; }
 .pause-panel .menu-list { width: 100%; margin-top: calc(var(--u) * 4); }
 .pause-panel .game-btn { height: calc(var(--u) * 22); font-size: calc(var(--u) * 9); }

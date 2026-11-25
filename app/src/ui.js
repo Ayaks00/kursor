@@ -33,12 +33,18 @@
       introTask: document.getElementById('intro-task'),
       completeName: document.getElementById('complete-name'),
       completeTime: document.getElementById('complete-time'),
-      completeStats: document.getElementById('complete-stats')
+      completeStats: document.getElementById('complete-stats'),
+      quizLevel: document.getElementById('quiz-level'),
+      quizQuestion: document.getElementById('quiz-question'),
+      quizFeedback: document.getElementById('quiz-feedback')
     };
+    this.quizList = document.getElementById('quiz-list');
 
     this.menuSignature = '';
     this.levelSignature = '';
+    this.quizSignature = '';
     this.buildPauseButtons();
+    this.applyLanguage();
     this.resize();
     window.addEventListener('resize', function () { self.resize(); });
     requestAnimationFrame(function () { self.resize(); });
@@ -76,7 +82,7 @@
     this.menuSignature = signature;
     this.menuList.innerHTML = '';
     this.menuButtons = items.map(function (it) {
-      return self.makeButton(it.label, function () { self.game.menuAction(it.id); }, self.menuList);
+      return self.makeButton(KZ.t(it.label), function () { self.game.menuAction(it.id); }, self.menuList);
     });
   };
 
@@ -101,8 +107,40 @@
       ['ПЕРЕЗАПУСК УРОВНЯ', function () { self.game.restartLevel(); }],
       ['ЗВУК ВКЛ/ВЫКЛ', function () { self.game.audio.toggleMute(); }]
     ];
+    this.pauseLabels = actions.map(function (a) { return a[0]; });
     this.pauseButtons = actions.map(function (a) {
-      return self.makeButton(a[0], a[1], self.pauseList);
+      return self.makeButton(KZ.t(a[0]), a[1], self.pauseList);
+    });
+  };
+
+  UI.prototype.applyLanguage = function () {
+    var nodes = document.querySelectorAll('[data-i18n]');
+    for (var i = 0; i < nodes.length; i++) {
+      var el = nodes[i];
+      if (!el.dataset.ru) el.dataset.ru = el.textContent;
+      el.textContent = KZ.t(el.dataset.ru);
+    }
+    for (var p = 0; p < this.pauseButtons.length; p++) {
+      this.pauseButtons[p].textContent = KZ.t(this.pauseLabels[p]);
+    }
+    this.menuSignature = '';
+    this.levelSignature = '';
+    this.quizSignature = '';
+  };
+
+  UI.prototype.buildQuizButtons = function (game) {
+    var items = game.quizItems();
+    var signature = game.quizIndex + '|' + game.quizAnswered + '|' + items.map(function (it) { return it.label; }).join('|');
+    if (signature === this.quizSignature) return;
+    this.quizSignature = signature;
+    var self = this;
+    this.quizList.innerHTML = '';
+    if (game.quizAnswered) {
+      this.quizButtons = [this.makeButton(KZ.t('ДАЛЬШЕ'), function () { game.quizContinue(); }, this.quizList)];
+      return;
+    }
+    this.quizButtons = items.map(function (it) {
+      return self.makeButton(it.label, function () { game.answerQuiz(it.index); }, self.quizList);
     });
   };
 
@@ -128,13 +166,23 @@
       this.highlight(this.levelButtons, game.menuIndex);
     }
     if (state === 'pause') this.highlight(this.pauseButtons, game.menuIndex);
+    if (state === 'quiz') {
+      this.buildQuizButtons(game);
+      this.highlight(this.quizButtons, game.menuIndex);
+      var quizLv = KZ.LEVELS[game.quizIndex];
+      this.el.quizLevel.textContent = KZ.t(quizLv.name);
+      this.el.quizQuestion.textContent = KZ.t(quizLv.quiz.question);
+      this.el.quizFeedback.textContent = game.quizAnswered ? KZ.t(game.quizCorrect ? 'ВЕРНО!' : 'НЕВЕРНО') : '';
+      this.el.quizFeedback.classList.toggle('active', game.quizAnswered);
+      this.el.quizFeedback.classList.toggle('wrong', game.quizAnswered && !game.quizCorrect);
+    }
 
     if (state === 'intro') {
       var lv = game.level;
-      this.el.introTitle.textContent = 'УРОВЕНЬ ' + lv.id + ' · ' + lv.name;
-      this.el.introSubtitle.textContent = lv.subtitle;
-      this.el.introFact.textContent = lv.fact;
-      this.el.introTask.textContent = lv.task;
+      this.el.introTitle.textContent = KZ.t('УРОВЕНЬ') + ' ' + lv.id + ' · ' + KZ.t(lv.name);
+      this.el.introSubtitle.textContent = KZ.t(lv.subtitle);
+      this.el.introFact.textContent = KZ.t(lv.fact);
+      this.el.introTask.textContent = KZ.t(lv.task);
     }
 
     if (hudOn) {
@@ -145,25 +193,25 @@
       this.el.chakCount.textContent = taken;
       this.el.chakTotal.textContent = '/ ' + game.items.length;
       this.el.chakFill.style.width = (game.items.length ? Math.round(taken / game.items.length * 100) : 0) + '%';
-      this.el.curvLabel.textContent = game.target ? 'ЛОБАЧЕВСКИЙ' : 'ПЛОСКОСТЬ';
+      this.el.curvLabel.textContent = KZ.t(game.target ? 'ЛОБАЧЕВСКИЙ' : 'ПЛОСКОСТЬ');
       this.el.curvFill.style.width = Math.round(game.curvature * 100) + '%';
       var boss = game.boss;
       this.el.bossBox.classList.toggle('active', !!boss && !boss.dead);
-      if (boss) this.el.bossFill.style.width = Math.max(0, boss.hp / 3 * 100) + '%';
+      if (boss) this.el.bossFill.style.width = Math.max(0, boss.hp / (boss.maxHp || 10) * 100) + '%';
       var showHint = state === 'play' && game.hintTime > 0 && !game.hintDismissed;
       this.el.hintBox.classList.toggle('active', showHint);
-      if (showHint) this.el.hintTask.textContent = level.task;
+      if (showHint) this.el.hintTask.textContent = KZ.t(level.task);
     }
 
     if (state === 'complete') {
       this.el.completeName.textContent = game.level.name;
-      this.el.completeTime.textContent = 'ВРЕМЯ: ' + game.timeInLevel.toFixed(1) + ' с';
-      this.el.completeStats.textContent = 'ПЕРЕКЛЮЧЕНИЙ: ' + game.switches;
+      this.el.completeTime.textContent = KZ.t('ВРЕМЯ: ') + game.timeInLevel.toFixed(1) + KZ.t(' с');
+      this.el.completeStats.textContent = KZ.t('ПЕРЕКЛЮЧЕНИЙ: ') + game.switches;
     }
 
     var showToast = game.toastTime > 0;
     this.toast.classList.toggle('active', showToast);
-    if (showToast) this.toast.textContent = game.toast || '';
+    if (showToast) this.toast.textContent = KZ.t(game.toast || '');
   };
 
   KZ.UI = UI;

@@ -45,6 +45,10 @@
     this.camY = 0;
     this.menuIndex = 0;
     this.menuRects = [];
+    this.quizIndex = 0;
+    this.quizAnswered = false;
+    this.quizCorrect = false;
+    this.respawnPlane = 0;
     this.particles = [];
     this.effects = [];
     this.shakeTime = 0; this.shakeMag = 0;
@@ -54,6 +58,7 @@
     this.hintTime = 0;
     this.player = { x: 0, y: 0, vx: 0, vy: 0, w: 10 * K, h: 14 * K, onGround: false, groundIdx: -1, coyote: 0, jumpBuf: 0, face: 1 };
     this.save = this.loadSave();
+    KZ.setLang(this.save.lang || 'ru');
     this.result = null;
     this.victoryShown = false;
     this.setState('menu');
@@ -62,7 +67,7 @@
   Game.prototype.loadSave = function () {
     var raw = localStorage.getItem(SAVE_KEY);
     if (raw) return JSON.parse(raw);
-    return { unlocked: 0, best: {}, chak: {} };
+    return { unlocked: 0, best: {}, chak: {}, quiz: {}, lang: 'ru' };
   };
 
   Game.prototype.writeSave = function () {
@@ -105,8 +110,12 @@
     this.resetPlayer();
     this.camX = 0;
     this.camY = 0;
+    this.respawnPlane = 0;
     if (lv.boss) {
-      this.boss = { x: 480 * K, y: 118 * K, hp: 3, flash: 0, fireTimer: 1.6, hitCooldown: 0, dead: false, fireballs: [] };
+      var done = 0;
+      for (var qk in this.save.quiz) if (this.save.quiz[qk]) done++;
+      var hp0 = Math.max(1, 10 - done);
+      this.boss = { x: 480 * K, y: 118 * K, hp: hp0, maxHp: hp0, flash: 0, fireTimer: 1.6, hitCooldown: 0, dead: false, fireballs: [] };
     } else {
       this.boss = null;
     }
@@ -159,6 +168,8 @@
   };
 
   Game.prototype.respawnNow = function () {
+    this.target = this.respawnPlane;
+    this.curvature = this.respawnPlane;
     this.resetPlayer();
     this.settleOnPlatform();
     this.camX = clamp(this.player.x - W * 0.38, 0, Math.max(0, this.level.worldW - W));
@@ -266,7 +277,8 @@
     else if (this.state === 'pause') this.updatePause();
     else if (this.state === 'death') {
       if (this.stateTime > 1.25 || this.input.confirmPressed()) this.respawnNow();
-    } else if (this.state === 'complete') {
+    } else if (this.state === 'quiz') this.updateQuiz();
+    else if (this.state === 'complete') {
       if (this.input.confirmPressed()) this.advance();
     } else if (this.state === 'victory') {
       
@@ -320,23 +332,38 @@
   };
 
   Game.prototype.menuItems = function () {
-    var list = [{ id: 'new', label: 'НОВАЯ ИГРА' }];
-    if (this.save.unlocked > 0) list.push({ id: 'continue', label: 'ПРОДОЛЖИТЬ' });
-    list.push({ id: 'levels', label: 'ВЫБОР УРОВНЯ' });
-    list.push({ id: 'how', label: 'КАК ИГРАТЬ' });
+    var t = KZ.t;
+    var list = [{ id: 'new', label: t('НОВАЯ ИГРА') }];
+    if (this.save.unlocked > 0) list.push({ id: 'continue', label: t('ПРОДОЛЖИТЬ') });
+    list.push({ id: 'levels', label: t('ВЫБОР УРОВНЯ') });
+    list.push({ id: 'lang', label: KZ.t(this.langLabel()) });
+    list.push({ id: 'how', label: t('КАК ИГРАТЬ') });
     return list;
   };
 
   Game.prototype.menuAction = function (id) {
     if (id === 'new') {
-      this.save.unlocked = 0; this.save.best = {}; this.save.chak = {}; this.writeSave();
+      this.save.unlocked = 0; this.save.best = {}; this.save.chak = {}; this.save.quiz = {}; this.writeSave();
       this.loadLevel(0);
     } else if (id === 'continue') {
       this.loadLevel(clamp(this.save.unlocked, 0, KZ.LEVELS.length - 1));
     } else if (id === 'levels') {
       this.menuIndex = 0;
       this.setState('levels');
+    } else if (id === 'lang') {
+      var langs = KZ.LANGS;
+      var next = langs[(langs.indexOf(KZ.lang) + 1) % langs.length];
+      KZ.setLang(next);
+      this.save.lang = next;
+      this.writeSave();
+      if (this.ui) this.ui.applyLanguage();
     } else if (id === 'how') this.setState('how');
+  };
+
+  Game.prototype.langLabel = function () {
+    if (KZ.lang === 'en') return 'ЯЗЫК: ENGLISH';
+    if (KZ.lang === 'tt') return 'ЯЗЫК: ТАТАРЧА';
+    return 'ЯЗЫК: РУССКИЙ';
   };
 
   Game.prototype.levelItems = function () {
@@ -346,12 +373,12 @@
       var lv = KZ.LEVELS[i];
       var best = this.save.best[lv.id];
       var chak = this.save.chak[lv.id];
-      var info = locked ? ' — ЗАКРЫТ' :
-        ((best !== undefined ? ' · ' + best + ' с' : '') +
-         (chak !== undefined ? ' · чак-чак ' + chak + '/' + lv.items.length : ''));
-      list.push({ id: 'level:' + i, label: (i + 1) + '. ' + lv.name + info, locked: locked });
+      var info = locked ? KZ.t(' — ЗАКРЫТ') :
+        ((best !== undefined ? KZ.t(' · ') + best + KZ.t(' с') : '') +
+         (chak !== undefined ? KZ.t(' · чак-чак ') + chak + '/' + lv.items.length : ''));
+      list.push({ id: 'level:' + i, label: (i + 1) + '. ' + KZ.t(lv.name) + info, locked: locked });
     }
-    list.push({ id: 'back', label: 'НАЗАД' });
+    list.push({ id: 'back', label: KZ.t('НАЗАД') });
     return list;
   };
 
@@ -382,15 +409,65 @@
     this.loadLevel(idx);
   };
 
+  Game.prototype.quizItems = function () {
+    var lv = KZ.LEVELS[this.quizIndex];
+    if (!lv || !lv.quiz) return [];
+    return lv.quiz.options.map(function (o, i) { return { id: 'answer:' + i, label: KZ.t(o), index: i }; });
+  };
+
+  Game.prototype.updateQuiz = function () {
+    var items = this.quizItems();
+    if (this.quizAnswered) {
+      if (this.input.confirmPressed() || this.input.pausePressed()) this.quizContinue();
+      return;
+    }
+    if (this.input.upPressed()) this.menuIndex = (this.menuIndex + items.length - 1) % items.length;
+    if (this.input.downPressed()) this.menuIndex = (this.menuIndex + 1) % items.length;
+    if (this.input.pausePressed()) { this.quizContinue(); return; }
+    if (this.input.confirmPressed()) this.answerQuiz(this.menuIndex);
+  };
+
+  Game.prototype.answerQuiz = function (index) {
+    if (this.quizAnswered) return;
+    var lv = KZ.LEVELS[this.quizIndex];
+    this.quizCorrect = index === lv.quiz.correct;
+    this.quizAnswered = true;
+    this.menuIndex = 0;
+    if (this.quizCorrect) {
+      this.save.quiz[lv.id] = true;
+      this.writeSave();
+      this.audio.play('win', 0.5);
+    } else {
+      this.audio.play('hit', 0.5);
+    }
+    if (this.ui) this.ui.levelSignature = '';
+  };
+
+  Game.prototype.quizContinue = function () {
+    this.audio.play('click', 0.5);
+    this.advance();
+  };
+
+  Game.prototype.finishLevel = function () {
+    this.save.best[this.level.id] = Math.round(this.timeInLevel * 10) / 10;
+    this.save.chak[this.level.id] = this.items.filter(function (it) { return it.taken; }).length;
+    this.writeSave();
+    if (!this.level.boss && !this.save.quiz[this.level.id]) {
+      this.quizIndex = this.levelIndex;
+      this.quizAnswered = false;
+      this.menuIndex = 0;
+      this.setState('quiz');
+      return;
+    }
+    this.advance();
+  };
+
   Game.prototype.advance = function () {
     var next = this.levelIndex + 1;
     if (next >= KZ.LEVELS.length) {
       this.setState('menu');
     } else {
       this.save.unlocked = Math.max(this.save.unlocked, next);
-      this.save.best[this.level.id] = Math.round(this.timeInLevel * 10) / 10;
-      this.save.chak[this.level.id] = this.items.filter(function (it) { return it.taken; }).length;
-      this.writeSave();
       this.loadLevel(next);
     }
   };
@@ -543,6 +620,7 @@
       var cp = this.checkpoints[c];
       if (!cp.active && Math.abs(p.x + 5 * K - cp.x) < 10 * K && Math.abs(p.y + 7 * K - cp.y) < 14 * K) {
         cp.active = true;
+        this.respawnPlane = cp.plane === undefined ? (this.curvature >= 0.5 ? 1 : 0) : cp.plane;
         
         this.respawn = { x: cp.x - 5 * K, y: cp.y - 16 * K };
         this.audio.play('checkpoint', 0.55);
@@ -575,7 +653,7 @@
       this.burst(this.level.goal.x + 8 * K, this.level.goal.y + 12 * K, '#f5e3ab', 26, { speed: 2.4, size: 2, glow: true, gravity: -0.02 });
       this.ring(this.level.goal.x + 8 * K, this.level.goal.y + 12 * K, '#d9b15c', 36, 0.8);
       this.flash('#f5e3ab', 0.16, 0.3);
-      this.setState('complete');
+      this.finishLevel();
     }
 
     var targetX = clamp(p.x - W * 0.38, 0, Math.max(0, lv.worldW - W));
@@ -598,7 +676,7 @@
 
     b.fireTimer -= dt;
     if (b.fireTimer <= 0) {
-      var shots = b.hp === 3 ? 1 : b.hp === 2 ? 2 : 3;
+      var shots = b.hp > 7 ? 1 : b.hp > 4 ? 2 : 3;
       for (var s = 0; s < shots; s++) {
         var ang = Math.atan2(p.y - b.y, p.x - b.x) + (s - (shots - 1) / 2) * 0.28;
         var sp = (2.1 + (3 - b.hp) * 0.3) * K;

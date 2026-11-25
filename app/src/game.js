@@ -237,9 +237,15 @@
     ];
   };
 
+  Game.prototype.idealActive = function () {
+    return this.skills.ideal.lock > 0;
+  };
+
   Game.prototype.platformSolid = function (plat) {
     if (plat.phase2 && (!this.boss || this.boss.hp > 2)) return false;
     if (plat.kind === 'pulse') return this.time - this.lastSwitchAt < 1.8;
+    if (this.idealActive() &&
+        (plat.kind === 'flat' || plat.kind === 'curve' || plat.kind === 'resonance')) return true;
     return plat.kind === 'both' ||
       (plat.kind === 'flat' && this.curvature < 0.5) ||
       (plat.kind === 'curve' && this.curvature >= 0.5) ||
@@ -938,7 +944,8 @@
       var alpha = plat.kind === 'both' ? 1 :
         (plat.kind === 'pulse' || plat.kind === 'resonance' ? (this.time - this.lastSwitchAt < 1.8 ? 1 : 0.16) :
         (plat.phase2 && (!this.boss || this.boss.hp > 2) ? 0.14 :
-        (plat.kind === 'curve' ? 0.18 + this.curvature * 0.82 : 1.0 - this.curvature * 0.82)));
+        (this.idealActive() && (plat.kind === 'flat' || plat.kind === 'curve') ? 1 :
+        (plat.kind === 'curve' ? 0.18 + this.curvature * 0.82 : 1.0 - this.curvature * 0.82))));
       A.platform(ctx, ends[0], ends[1], plat.style, alpha, this.time, plat.kind);
     }
 

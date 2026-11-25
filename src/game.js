@@ -2,7 +2,7 @@
 (function (KZ) {
   'use strict';
 
-  var W = 480, H = 270;
+  var W = 480, H = 270, SCALE = 2;
   var A = KZ.Art;
   var SAVE_KEY = 'kz_lobachevsky_save_v1';
 
@@ -11,12 +11,19 @@
 
   function Game(canvas, input, audio) {
     this.canvas = canvas;
+    this.scale = SCALE;
+    // Логические координаты остаются 480×270, но реальный raster — 960×540:
+    // в четыре раза больше физических пикселей на ту же площадь экрана.
+    if (canvas.width !== W * SCALE) canvas.width = W * SCALE;
+    if (canvas.height !== H * SCALE) canvas.height = H * SCALE;
     this.ctx = canvas.getContext('2d');
     this.ctx.imageSmoothingEnabled = false;
+    this.ctx.scale(SCALE, SCALE);
     this.scene = document.createElement('canvas');
-    this.scene.width = W; this.scene.height = H;
+    this.scene.width = W * SCALE; this.scene.height = H * SCALE;
     this.sctx = this.scene.getContext('2d');
     this.sctx.imageSmoothingEnabled = false;
+    this.sctx.scale(SCALE, SCALE);
 
     this.input = input;
     this.audio = audio;
@@ -472,14 +479,15 @@
       var dir = this.target ? 1 : -1;
       for (var y = 0; y < H; y += 3) {
         var dx = Math.sin((y - this.level.vanish.y) / H * Math.PI) * 7 * k * dir;
-        c.drawImage(this.scene, 0, y, W, 3, dx, y, W, 3);
+        c.drawImage(this.scene, 0, y * this.scale, this.scene.width, 3 * this.scale,
+          dx, y, W, 3);
       }
       c.globalAlpha = 0.22 * k;
       c.fillStyle = '#e3c57d';
       c.fillRect(0, 0, W, H);
       c.globalAlpha = 1;
     } else {
-      c.drawImage(this.scene, 0, 0);
+      c.drawImage(this.scene, 0, 0, this.scene.width, this.scene.height, 0, 0, W, H);
     }
 
     if (this.ui) this.ui.render(this);

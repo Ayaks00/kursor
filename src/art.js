@@ -268,7 +268,26 @@
     ctx.restore();
   };
 
+  // Статичная фоновая картинка (заранее сгенерированный PNG), а не анимация.
+  var bgImages = {};
+  function bgImage(name) {
+    if (!(name in bgImages)) {
+      var data = window.BG_DATA && window.BG_DATA[name];
+      if (!data || typeof Image === 'undefined') { bgImages[name] = null; return null; }
+      var im = new Image();
+      im.src = data;
+      bgImages[name] = im;
+    }
+    return bgImages[name];
+  }
+
   A.backdrop = function (ctx, level, camX, time) {
+    var im = bgImage(level.bg);
+    if (im && im.complete && (im.naturalWidth || im.width)) {
+      ctx.drawImage(im, 0, 0, 480, 270);
+      return;
+    }
+    // Пока картинка грузится (и в headless-инструментах) — процедурный запасной вариант.
     var pal = level.palette;
     if (level.bg === 'bauman') A.bauman(ctx, camX, time, pal);
     else if (level.bg === 'kfu') A.kfu(ctx, camX, time, pal);

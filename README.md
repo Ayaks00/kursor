@@ -29,6 +29,8 @@ npm run pack
 
 Я взял готовую игру на чистом JavaScript и Canvas 2D и упаковал её в Electron. В `main.js` создаётся окно `BrowserWindow`, в него загружается `app/index.html`, системное меню убрано. Весь игровой код лежит в `app/`: `src/main.js` крутит кадры, `src/input.js` читает клавиатуру, `src/game.js` содержит физику и состояния, `src/levels.js` — уровни, `src/art.js` — спрайты, `src/ui.js` — текст поверх canvas, `src/audio.js` — звук.
 
+Фоны уровней сверены с фотографиями реальных локаций и перерисованы в одном пиксельном стиле (см. источники ниже).
+
 Фишка — переключение геометрии: концы платформ интерполируются между обычным и кривым положением, «параллельные» навесы сходятся в идеальной точке и становятся мостами. Логический мир — 1920×1080, все локации оформлены в одном детальном пиксельном стиле, фоны встроены в `src/bg-data.js`, звуки — в `src/sfx-data.js`. Графика рисуется примитивами Canvas 2D, музыка синтезируется через Web Audio API, текст вынесен в DOM. Упаковку в десктопное приложение делает `electron-builder`.
 
 ## Управление
@@ -63,8 +65,11 @@ npm run pack
 | Элемент | Источник |
 |---|---|
 | Н. И. Лобачевский, доклад 1826 г., ректор КФУ в 1827–1846 гг. | [КФУ](https://kpfu.ru/math/history/znamenitye-personalii/lobachevskij-nikolaj-ivanovich), [Музеи КФУ](https://dm.kpfu.ru/) |
+| Улица Баумана и колокольня Богоявленского собора | [Advantour](https://www.advantour.com/russia/kazan/bauman-street.htm) |
 | Главное здание Казанского университета | [Музей истории КФУ](https://dm.kpfu.ru/) |
+| Второй корпус КФУ («двойка») | [Музеи КФУ](https://museums.kpfu.ru/blog/news/vid-na-novye-korpusa) |
 | Обсерватория им. В. П. Энгельгардта | [КФУ](https://kpfu.ru/physics/struktura/kafedry/otdelenie-astrofiziki-i-kosmicheskoj-geodezii/astronom-observ-engelgardta), [astro.kpfu.ru](https://astro.kpfu.ru/architecture) |
+| Гостиный двор Казани | [HobbySalon](https://www.hobbysalon.ru/russia/respublika-tatarstan/kazan/gostinyj-dvor-v-kazani) |
 | Казанский Кремль, башня Сююмбике | [UNESCO](https://unesco.ru/en/unescorussia/sites/s980/), [kazan-kremlin.ru](https://kazan-kremlin.ru/) |
 
 Код, графика, фоны и музыка — материалы команды ИБ. Единственные сторонние файлы — звуки **Kenney** под лицензией [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/). «Идеальная точка», «постулаты» и мини-игра с Зилантом — игровая метафора, а не исторический факт.

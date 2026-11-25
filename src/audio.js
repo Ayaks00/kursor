@@ -1,4 +1,4 @@
-/* Звук: CC0-сэмплы (см. README.md) + процедурная chiptune-музыка. */
+
 (function (KZ) {
   'use strict';
 
@@ -33,7 +33,7 @@
     }
   };
 
-  // Лад: гармонический минор от A — узнаваемый «восточный» колорит.
+  
   var SCALE = [0, 2, 3, 5, 7, 8, 11];
   function hz(semitone) { return 220 * Math.pow(2, semitone / 12); }
   function noteHz(step) {
@@ -61,7 +61,6 @@
       return;
     }
     var AC = window.AudioContext || window.webkitAudioContext;
-    if (!AC) return;
     this.started = true;
     this.ctx = new AC();
     this.master = this.ctx.createGain();
@@ -79,12 +78,9 @@
 
   AudioSystem.prototype.play = function (name, volume) {
     if (this.muted || !window.SFX_DATA || !window.SFX_DATA[name]) return;
-    try {
-      var audio = new Audio(window.SFX_DATA[name]);
-      audio.volume = typeof volume === 'number' ? volume : 0.45;
-      var p = audio.play();
-      if (p && p.catch) p.catch(function () {});
-    } catch (e) { /* звук необязателен для игры */ }
+    var audio = new Audio(window.SFX_DATA[name]);
+    audio.volume = volume;
+    audio.play();
   };
 
   AudioSystem.prototype.setTheme = function (name) {
@@ -105,7 +101,7 @@
   AudioSystem.prototype.schedule = function () {
     if (!this.ctx || this.muted || !this.theme || !THEMES[this.theme]) return;
     var th = THEMES[this.theme];
-    var stepDur = 60 / th.bpm / 2; // восьмые
+    var stepDur = 60 / th.bpm / 2; 
     while (this.nextNote < this.ctx.currentTime + 0.18) {
       var i = this.step % 8;
       var t = this.nextNote;

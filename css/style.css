@@ -48,7 +48,7 @@ body {
   outline: none;
 }
 
-/* ---------- Текстовый слой: потоковая вёрстка, без наложений ---------- */
+
 #ui {
   position: absolute;
   inset: 0;
@@ -72,7 +72,7 @@ h1, h2 {
   text-shadow: calc(var(--u) * 1) calc(var(--u) * 1) 0 #1b150f;
 }
 
-/* Главное меню */
+
 .screen[data-screen="menu"] { justify-content: flex-start; padding-top: calc(var(--u) * 18); }
 .screen[data-screen="menu"] .title { font-size: calc(var(--u) * 22); }
 .screen[data-screen="menu"] .subtitle {
@@ -107,7 +107,7 @@ h1, h2 {
   font-size: calc(var(--u) * 8); color: var(--dim);
 }
 
-/* Панели с текстом */
+
 .panel-screen { justify-content: center; }
 .panel {
   display: flex; flex-direction: column; gap: calc(var(--u) * 6);
@@ -145,14 +145,14 @@ h1, h2 {
 .result-panel { width: calc(var(--u) * 272) !important; text-align: center; }
 .result-panel h2 { font-size: calc(var(--u) * 14); }
 
-/* Смерть */
+
 .screen[data-screen="death"] { justify-content: center; }
 .death-box { display: flex; flex-direction: column; gap: calc(var(--u) * 8); }
 .death-box h2 { color: #c45646; font-size: calc(var(--u) * 20); }
 .death-box p { font-size: calc(var(--u) * 10); }
 .death-box .screen-hint { margin-top: 0; }
 
-/* HUD */
+
 #hud { display: none; position: absolute; inset: 0; }
 #hud.active { display: block; }
 #hud-level {
@@ -161,7 +161,7 @@ h1, h2 {
 }
 #hud-level { left: calc(var(--u) * 6); color: var(--gold-light); }
 
-/* Счётчик чак-чака — отдельный заметный блок, а не строка в HUD. */
+
 #chakchak-box {
   position: absolute; top: calc(var(--u) * 4); right: calc(var(--u) * 5);
   display: flex; align-items: center; gap: calc(var(--u) * 5);

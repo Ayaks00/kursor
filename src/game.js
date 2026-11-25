@@ -1,9 +1,9 @@
-/* Основной игровой цикл: состояния, физика, механика кривизны, UI. */
+
 (function (KZ) {
   'use strict';
 
-  // Логические координаты = физический raster: 1920×1080, без виртуального масштаба.
-  // K — размер одного пикселя старой «дизайнерской» сетки внутри спрайтов.
+  
+  
   var K = 4;
   var W = 480 * K, H = 270 * K, SCALE = 1;
   var A = KZ.Art;
@@ -15,8 +15,8 @@
   function Game(canvas, input, audio) {
     this.canvas = canvas;
     this.scale = SCALE;
-    // Игровой мир живёт в настоящих пикселях 1920×1080: уровни, физика и эффекты
-    // используют те же координаты, что и canvas. Детали спрайтов рисуются с шагом K.
+    
+    
     if (canvas.width !== W * SCALE) canvas.width = W * SCALE;
     if (canvas.height !== H * SCALE) canvas.height = H * SCALE;
     this.ctx = canvas.getContext('2d');
@@ -57,15 +57,13 @@
   }
 
   Game.prototype.loadSave = function () {
-    try {
-      var raw = localStorage.getItem(SAVE_KEY);
-      if (raw) return JSON.parse(raw);
-    } catch (e) {}
+    var raw = localStorage.getItem(SAVE_KEY);
+    if (raw) return JSON.parse(raw);
     return { unlocked: 0, best: {} };
   };
 
   Game.prototype.writeSave = function () {
-    try { localStorage.setItem(SAVE_KEY, JSON.stringify(this.save)); } catch (e) {}
+    localStorage.setItem(SAVE_KEY, JSON.stringify(this.save));
   };
 
   Game.prototype.setState = function (s) {
@@ -130,8 +128,8 @@
     this.setState('death');
   };
 
-  // Страховка респавна: если точка оказалась внутри/под платформой,
-  // поднимаем игрока на её поверхность, а не даём провалиться сквозь неё.
+  
+  
   Game.prototype.settleOnPlatform = function () {
     var p = this.player;
     var cx = p.x + p.w / 2, bestY = Infinity;
@@ -163,7 +161,7 @@
     this.setState('play');
   };
 
-  // Частицы с настраиваемой скоростью, силой тяжести, размером и свечением.
+  
   Game.prototype.spark = function (x, y, color, opt) {
     opt = opt || {};
     if (this.particles.length > 420) return;
@@ -187,7 +185,7 @@
     for (var i = 0; i < n; i++) this.spark(x, y, color, opt);
   };
 
-  // Расширяющееся кольцо — ударная волна при переключении геометрии, сборе и ударе.
+  
   Game.prototype.ring = function (x, y, color, maxR, life, screen) {
     if (this.effects.length > 40) return;
     this.effects.push({ x: x, y: y, color: color, r: 1, maxR: maxR * K, life: life, maxLife: life, screen: !!screen });
@@ -256,7 +254,7 @@
     } else if (this.state === 'complete') {
       if (this.input.confirmPressed()) this.advance();
     } else if (this.state === 'victory') {
-      // Титры засыпают золотыми листьями и чак-чаком — эффект поверх интерфейса.
+      
       if (this.frameNo % 3 === 0) {
         var festive = ['#f5e3ab', '#d9b15c', '#92b27a', '#b5643f', '#e9dfc4'];
         for (var ci = 0; ci < 2; ci++) {
@@ -269,13 +267,13 @@
       if (this.input.confirmPressed() && this.stateTime > 1.5) this.setState('menu');
     }
 
-    // частицы
+    
     for (var i = this.particles.length - 1; i >= 0; i--) {
       var q = this.particles[i];
       q.x += q.vx; q.y += q.vy; q.vy += q.gravity; q.life -= dt;
       if (q.life <= 0) this.particles.splice(i, 1);
     }
-    // ударные кольца
+    
     for (var ef = this.effects.length - 1; ef >= 0; ef--) {
       var fx = this.effects[ef];
       fx.life -= dt;
@@ -366,8 +364,8 @@
     this.timeInLevel += dt;
     if (this.invuln > 0) this.invuln -= dt;
     if (this.hintTime > 0) this.hintTime -= dt;
-    // Пробел при показанной подсказке только закрывает её:
-    // игрок не должен нечаянно прыгнуть, убирая окно с экрана.
+    
+    
     if (this.hintTime > 0 && inp.jumpPressed()) {
       this.hintTime = 0;
       this.hintDismissed = true;
@@ -407,7 +405,7 @@
     p.x = clamp(p.x + p.vx, 0, lv.worldW - p.w);
     p.y += p.vy;
 
-    // Короткий шлейф за героем: заметен при беге и в кривой геометрии.
+    
     if (!p.trail) p.trail = [];
     if (this.frameNo % 2 === 0 && Math.abs(p.vx) > 0.5 * K) {
       p.trail.push({ x: p.x, y: p.y });
@@ -454,7 +452,7 @@
 
     if (p.y > 290 * K) { this.die(); return; }
 
-    // предметы
+    
     for (var q = 0; q < this.items.length; q++) {
       var it = this.items[q];
       if (it.taken) continue;
@@ -467,12 +465,12 @@
         this.flash(sparkle, 0.05, 0.1);
       }
     }
-    // чекпоинты
+    
     for (var c = 0; c < this.checkpoints.length; c++) {
       var cp = this.checkpoints[c];
       if (!cp.active && Math.abs(p.x + 5 * K - cp.x) < 10 * K && Math.abs(p.y + 7 * K - cp.y) < 14 * K) {
         cp.active = true;
-        // cp.y — поверхность платформы; высота игрока 14*K, плюс небольшой зазор.
+        
         this.respawn = { x: cp.x - 5 * K, y: cp.y - 16 * K };
         this.audio.play('checkpoint', 0.55);
         this.burst(cp.x, cp.y - 14, '#f5e3ab', 18, { speed: 1.6, size: 2, glow: true, gravity: -0.01 });
@@ -482,7 +480,7 @@
         this.toastTime = 1.4;
       }
     }
-    // опасности
+    
     var hx, hy, hw = 0, hh = 0;
     for (var h = 0; h < this.hazards.length; h++) {
       var hz = this.hazards[h];
@@ -570,7 +568,7 @@
     }
   };
 
-  /* ---------- отрисовка ---------- */
+  
 
   Game.prototype.wrapText = function (ctx, str, x, y, maxW, lineH, opt) {
     var words = str.split(' ');
@@ -592,8 +590,8 @@
   Game.prototype.render = function () {
     var c = this.ctx;
     var warping = this.warp > 0 && this.state === 'play';
-    // Обычные кадры идут сразу в экранный canvas: сразу на 1920×1080 меньше
-    // одна полная перерисовка. Двойной буфер нужен только на эффекте схождения.
+    
+    
     var s = warping ? this.sctx : c;
     s.clearRect(0, 0, W, H);
     var amp = this.shakeTime > 0 ? this.shakeMag * Math.min(1, this.shakeTime * 6) : 0;
@@ -605,7 +603,7 @@
       s.fillRect(0, 0, W, H);
     }
     s.save();
-    // При схождении тряска применяется при копировании полос; здесь её нет.
+    
     if (!warping) s.translate(ox, oy);
     if (this.state === 'menu' || this.state === 'how') {
       A.backdrop(s, KZ.LEVELS[3], 0, this.time);
@@ -636,7 +634,7 @@
       c.fillRect(0, 0, W, H);
       c.globalAlpha = 1;
     }
-    // Цветовая вспышка поверх мира, но под DOM-интерфейсом.
+    
     if (this.flashTime > 0 && this.flashAlpha > 0) {
       c.globalAlpha = this.flashAlpha * Math.min(1, this.flashTime / Math.max(0.01, this.flashMax));
       c.fillStyle = this.flashColor;
@@ -709,7 +707,7 @@
     }
     ctx.restore();
 
-    // Кривизна искажает и фон: лёгкие «дуги» поверх сцены.
+    
     if (this.curvature > 0.02) {
       ctx.save();
       ctx.globalAlpha = this.curvature * 0.14;
@@ -722,10 +720,10 @@
       ctx.restore();
     }
 
-    // Постоянное виньетирование: глубина без движения и без усложнения фона.
+    
     A.vignette(ctx);
 
-    // Эффекты и конфетти в экранных координатах — поверх виньетки, под HTML-слоем.
+    
     for (var se = 0; se < this.effects.length; se++) {
       if (this.effects[se].screen) A.drawRing(ctx, this.effects[se]);
     }
@@ -735,27 +733,27 @@
   };
 
   Game.prototype.drawMenu = function (c) {
-    // Текст вынесен в HTML-слой (src/ui.js).
+    
   };
 
   Game.prototype.drawHow = function (c) {
-    // Текст вынесен в HTML-слой (src/ui.js).
+    
   };
 
   Game.prototype.drawAbout = function (c) {
-    // Текст вынесен в HTML-слой (src/ui.js).
+    
   };
 
   Game.prototype.drawExit = function (c) {
-    // Текст вынесен в HTML-слой (src/ui.js).
+    
   };
 
   Game.prototype.drawIntro = function (c) {
-    // Текст вынесен в HTML-слой (src/ui.js).
+    
   };
 
   Game.prototype.drawHUD = function (c) {
-    // Текст вынесен в HTML-слой (src/ui.js).
+    
   };
 
   Game.prototype.dim = function (c, alpha) {
@@ -764,19 +762,19 @@
   };
 
   Game.prototype.drawPause = function (c) {
-    // Текст вынесен в HTML-слой (src/ui.js).
+    
   };
 
   Game.prototype.drawDeath = function (c) {
-    // Текст вынесен в HTML-слой (src/ui.js).
+    
   };
 
   Game.prototype.drawComplete = function (c) {
-    // Текст вынесен в HTML-слой (src/ui.js).
+    
   };
 
   Game.prototype.drawVictory = function (c) {
-    // Текст вынесен в HTML-слой (src/ui.js).
+    
   };
 
   KZ.Game = Game;

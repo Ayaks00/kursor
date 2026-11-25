@@ -708,7 +708,7 @@
     
     for (var c = 0; c < this.checkpoints.length; c++) {
       var cp = this.checkpoints[c];
-      if (!cp.active && Math.abs(p.x + 5 * K - cp.x) < 10 * K && Math.abs(p.y + 7 * K - cp.y) < 14 * K) {
+      if (!cp.active && Math.abs(p.x + 5 * K - cp.x) < 14 * K && Math.abs(p.y + 7 * K - cp.y) < 18 * K) {
         cp.active = true;
         this.respawnPlane = cp.plane === undefined ? (this.curvature >= 0.5 ? 1 : 0) : cp.plane;
         

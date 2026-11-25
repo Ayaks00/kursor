@@ -41,6 +41,7 @@
     this.warpMax = 0.5;
     this.switches = 0;
     this.camX = 0;
+    this.camY = 0;
     this.menuIndex = 0;
     this.menuRects = [];
     this.particles = [];
@@ -98,6 +99,7 @@
     this.invuln = 0;
     this.resetPlayer();
     this.camX = 0;
+    this.camY = 0;
     if (lv.boss) {
       this.boss = { x: 480 * K, y: 118 * K, hp: 3, flash: 0, fireTimer: 1.6, hitCooldown: 0, dead: false, fireballs: [] };
     } else {
@@ -155,6 +157,7 @@
     this.resetPlayer();
     this.settleOnPlatform();
     this.camX = clamp(this.player.x - W * 0.38, 0, Math.max(0, this.level.worldW - W));
+    this.camY = clamp(this.player.y - H * 0.52, this.level.worldTop, 0);
     this.invuln = 1.8;
     if (this.boss) {
       this.boss.fireballs = [];
@@ -555,7 +558,11 @@
       this.setState('complete');
     }
 
-    this.camX = clamp(p.x - W * 0.38, 0, Math.max(0, lv.worldW - W));
+    var targetX = clamp(p.x - W * 0.38, 0, Math.max(0, lv.worldW - W));
+    var targetY = clamp(p.y - H * 0.52, lv.worldTop, 0);
+    var follow = Math.min(1, dt * 7);
+    this.camX += (targetX - this.camX) * follow;
+    this.camY += (targetY - this.camY) * follow;
   };
 
   Game.prototype.updateBoss = function (dt) {
@@ -657,7 +664,7 @@
     
     if (!warping) s.translate(ox, oy);
     if (this.state === 'menu' || this.state === 'how' || this.state === 'levels') {
-      A.backdrop(s, KZ.LEVELS[4], 0, this.time);
+      A.backdrop(s, KZ.LEVELS[4], 0, 0, this.time);
       s.fillStyle = 'rgba(9,9,22,0.55)';
       s.fillRect(0, 0, W, H);
       A.halo(s, 240, 74, 84, '#d9b15c', 0.12);
@@ -676,11 +683,11 @@
       var SLICE = 3 * K;
       for (var y = 0; y < H + SLICE; y += SLICE) {
         var sy = Math.min(y, H - SLICE);
-        var dx = Math.sin((y - this.level.vanish.y) / H * Math.PI) * 11 * K * k * dir;
+        var dx = Math.sin((y - (this.level.vanish.y - this.camY)) / H * Math.PI) * 11 * K * k * dir;
         c.drawImage(this.scene, 0, sy * this.scale, this.scene.width, SLICE * this.scale,
           dx - K + ox, y - K + oy, W + 2 * K, SLICE);
       }
-      var vx = this.level.vanish.x, vy = this.level.vanish.y;
+      var vx = this.level.vanish.x - this.camX, vy = this.level.vanish.y - this.camY;
       c.save();
       c.globalAlpha = 0.6 * k;
       c.lineWidth = K * 0.5;
@@ -717,10 +724,10 @@
 
   Game.prototype.drawWorld = function (ctx) {
     var lv = this.level;
-    A.backdrop(ctx, lv, this.camX, this.time);
+    A.backdrop(ctx, lv, this.camX, this.camY, this.time);
 
     ctx.save();
-    ctx.translate(-Math.round(this.camX), 0);
+    ctx.translate(-Math.round(this.camX), -Math.round(this.camY));
 
     A.convergenceGuides(ctx, lv, this.curvature, this.time);
     A.idealPoint(ctx, lv.vanish, this.time, this.curvature);
@@ -729,7 +736,9 @@
       var plat = lv.platforms[i];
       var ends = this.platformEnds(plat);
       if (Math.max(ends[0][0], ends[1][0]) < this.camX - 20 ||
-          Math.min(ends[0][0], ends[1][0]) > this.camX + W + 20 * K) continue;
+          Math.min(ends[0][0], ends[1][0]) > this.camX + W + 20 * K ||
+          Math.max(ends[0][1], ends[1][1]) < this.camY - 20 ||
+          Math.min(ends[0][1], ends[1][1]) > this.camY + H + 20 * K) continue;
       var alpha = plat.kind === 'both' ? 1 :
         (plat.kind === 'curve' ? 0.18 + this.curvature * 0.82 : 1.0 - this.curvature * 0.82);
       A.platform(ctx, ends[0], ends[1], plat.style, alpha, this.time);
@@ -738,7 +747,8 @@
     if (lv.lamps) {
       for (var li = 0; li < lv.lamps.length; li++) {
         var lampX = lv.lamps[li][0];
-        if (lampX < this.camX - 60 || lampX > this.camX + W + 60) continue;
+        if (lampX < this.camX - 60 || lampX > this.camX + W + 60 ||
+            lv.lamps[li][1] < this.camY - 60 || lv.lamps[li][1] > this.camY + H + 60) continue;
         A.lantern(ctx, lampX, lv.lamps[li][1], this.time);
       }
     }
@@ -784,7 +794,7 @@
       ctx.strokeStyle = '#e3c57d';
       for (var l = 0; l < 5; l++) {
         ctx.beginPath();
-        ctx.arc(lv.vanish.x - this.camX, lv.vanish.y, (45 + l * 38 + Math.sin(this.time * 2 + l) * 4) * K, 0, Math.PI * 2);
+        ctx.arc(lv.vanish.x - this.camX, lv.vanish.y - this.camY, (45 + l * 38 + Math.sin(this.time * 2 + l) * 4) * K, 0, Math.PI * 2);
         ctx.stroke();
       }
       ctx.restore();

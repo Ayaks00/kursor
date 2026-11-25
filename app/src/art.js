@@ -346,11 +346,11 @@
     return bgImages[name];
   }
 
-  A.backdropFine = function (ctx, level, camX, time) {
+  A.backdropFine = function (ctx, level, camX, camY, time) {
     var seed = level.id * 97;
     for (var i = 0; i < 72; i++) {
       var x = ((i * 137 + seed) % 2000) - 40 - camX * 0.12;
-      var y = 12 + ((i * 83 + seed) % 250) * A.U;
+      var y = 12 + ((i * 83 + seed) % 250) * A.U - camY * 0.05;
       var a = 0.08 + 0.08 * Math.sin(time * 2 + i);
       ctx.globalAlpha = a;
       A.fineRect(ctx, x, y, 2, 2, i % 3 ? '#f5e3ab' : '#8ee9f2');
@@ -364,11 +364,14 @@
     ctx.globalAlpha = 1;
   };
 
-  A.backdrop = function (ctx, level, camX, time) {
+  A.backdrop = function (ctx, level, camX, camY, time) {
+    var shiftY = -camY * 0.18;
+    ctx.fillStyle = (level.palette && level.palette.sky) || '#1c2438';
+    ctx.fillRect(0, 0, 480 * A.U, 270 * A.U);
     var im = bgImage(level.bg);
     if (im && im.complete && (im.naturalWidth || im.width)) {
-      ctx.drawImage(im, 0, 0, 480 * A.U, 270 * A.U);
-      A.backdropFine(ctx, level, camX, time);
+      ctx.drawImage(im, 0, shiftY, 480 * A.U, 270 * A.U);
+      A.backdropFine(ctx, level, camX, camY, time);
       return;
     }
     

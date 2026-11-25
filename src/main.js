@@ -1,4 +1,4 @@
-/* Точка входа: фиксированный шаг 60 Гц, рендер по requestAnimationFrame. */
+/* Точка входа: фиксированный шаг 60 Гц, DOM-интерфейс и рендер мира по rAF. */
 (function () {
   'use strict';
   var canvas = document.getElementById('game');
@@ -6,15 +6,18 @@
   var input = new KZ.Input(canvas);
   var audio = new KZ.AudioSystem();
   var game = new KZ.Game(canvas, input, audio);
+  var ui = new KZ.UI(game);
+  game.ui = ui;
 
   window.KZ.game = game;
+  window.KZ.ui = ui;
 
   function unlock() {
     audio.unlock();
     if (hint) hint.classList.add('hidden');
   }
   window.addEventListener('keydown', unlock, { once: true });
-  canvas.addEventListener('mousedown', unlock, { once: true });
+  document.addEventListener('pointerdown', unlock, { once: true });
 
   var last = performance.now();
   var acc = 0;

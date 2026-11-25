@@ -134,7 +134,7 @@
       for (var s = 0; s < 66; s += 11) A.rect(ctx, bx + s, 126, 6, 10, C.terracotta);
       A.rect(ctx, bx + 2, 137, 62, 3, C.goldDark);
       A.rect(ctx, bx + 5, 141, 56, 13, '#3a291e');
-      A.text(ctx, i % 2 ? 'ЧАК-ЧАК' : 'АМФОРЫ', bx + 7, 143, { size: 8, color: C.goldLight, mono: true, shadow: false });
+      A.rect(ctx, bx + 8, 145, i % 2 ? 36 : 28, 2, C.goldDark);
       A.column(ctx, bx + 6, 156, 52, C.marbleDim);
       A.column(ctx, bx + 56, 156, 52, C.marbleDim);
       // амфора у входа
@@ -172,15 +172,15 @@
       A.rect(ctx, bx + 4, 152, 8, 12, C.marble);
       A.rect(ctx, bx + 2, 164, 12, 5, C.marbleDark);
     }
-    A.text(ctx, 'ΑΚΑΔΗΜΙΑ', ox - 42, 88, { size: 8, color: C.goldDark, align: 'left', shadow: false });
-    A.text(ctx, 'АКАДЕМИЯ', ox - 120, 110, { size: 7, color: '#5a4a32', align: 'center', shadow: false });
+    A.rect(ctx, ox - 42, 88, 84, 2, C.goldDark);
+    A.ornament(ctx, ox - 100, 108, 200, '#5a4a32', 0);
     // каменная таблица с чертежом параллельных
     A.rect(ctx, 20, 150, 76, 44, '#4a4a3f');
     A.rect(ctx, 23, 153, 70, 38, '#5b5947');
     ctx.strokeStyle = C.gold; ctx.lineWidth = 1;
     ctx.beginPath(); ctx.moveTo(30, 162); ctx.lineTo(86, 156); ctx.moveTo(30, 176); ctx.lineTo(86, 170); ctx.stroke();
     A.rect(ctx, 56, 160, 2, 2, C.goldLight);
-    A.text(ctx, 'a // b ?', 29, 181, { size: 8, color: C.goldLight, mono: true, shadow: false });
+    A.rect(ctx, 29, 181, 40, 2, C.goldLight);
     A.rect(ctx, 0, 218, 480, 52, pal.ground || '#4c4030');
     A.ornament(ctx, 0, 221, 480, C.goldDark, 0);
   };
@@ -216,7 +216,7 @@
     ctx.beginPath(); ctx.arc(dx, 141, 17, 0, Math.PI * 2); ctx.stroke();
     ctx.beginPath(); ctx.arc(dx, 141, 11, 0, Math.PI * 2); ctx.stroke();
     A.rect(ctx, dx - 2, 139, 4, 4, C.goldLight);
-    A.text(ctx, 'ΑΣΤΡΑ', dx - 12, 172, { size: 7, color: C.goldDark, shadow: false });
+    A.ornament(ctx, dx - 16, 172, 32, C.goldDark, 0);
     // оливковые рощи на горизонте
     for (var tr = 0; tr < 10; tr++) {
       var tx = tr * 58 - (camX * 0.3) % 58;
@@ -395,7 +395,8 @@
     A.ornament(ctx, x - 1, y - 7, 18, C.goldDark, 0);
     A.rect(ctx, x, y, 16, 30, active ? '#e8c46c' : '#5b4b38');
     A.rect(ctx, x + 3, y + 3, 10, 24, active ? C.goldLight : '#776449');
-    A.text(ctx, '∞', x + 4, y + 16, { size: 8, color: '#6c4a24', mono: true, shadow: false });
+    A.rect(ctx, x + 5, y + 15, 6, 2, '#6c4a24');
+    A.rect(ctx, x + 7, y + 12, 2, 8, '#6c4a24');
   };
 
   A.dragon = function (ctx, b, time) {
@@ -436,7 +437,7 @@
       A.rect(ctx, x + Math.cos(a) * (r + 8), y + Math.sin(a) * (r + 8), 2, 2, C.goldLight);
     }
     A.rect(ctx, x - 1, y - 1, 3, 3, C.goldLight);
-    A.text(ctx, 'идеальная точка', x + 10, y - 5, { size: 8, color: C.goldLight, shadow: false });
+    A.rect(ctx, x + 10, y - 4, 26, 1, C.goldLight);
   };
 
   A.convergenceGuides = function (ctx, level, strength, phase) {

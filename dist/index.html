@@ -9,7 +9,137 @@
 </head>
 <body>
   <div id="frame">
-    <canvas id="game" width="480" height="270" aria-label="Игра Лобачевский: Кривая Казань"></canvas>
+    <div id="stage">
+      <canvas id="game" width="480" height="270" aria-label="Игра Лобачевский: Кривая Казань"></canvas>
+
+      <!-- Весь текст — настоящие HTML-элементы, а не рисунок на canvas. -->
+      <div id="ui">
+        <section class="screen" data-screen="menu">
+          <h1 class="title">ЛОБАЧЕВСКИЙ</h1>
+          <div class="subtitle">КРИВАЯ КАЗАНЬ</div>
+          <p class="tagline">Параллельные прямые встречаются — начни игру</p>
+          <div class="menu-list" id="menu-list"></div>
+          <div class="controls">
+            <div>WASD / СТРЕЛКИ — ДВИЖЕНИЕ · ПРОБЕЛ — ПРЫЖОК</div>
+            <div>Q / SHIFT — КРИВИЗНА · ESC — ПАУЗА · M — ЗВУК</div>
+            <div class="dim">ПИКСЕЛЬНЫЙ ПЛАТФОРМЕР · КОМАНДА ИБ</div>
+          </div>
+        </section>
+
+        <section class="screen panel-screen" data-screen="how">
+          <div class="panel">
+            <h2>КАК ИГРАТЬ</h2>
+            <div class="rule"></div>
+            <div class="keys">
+              <div><b>← →  или  A D</b><span>движение</span></div>
+              <div><b>ПРОБЕЛ / W / ↑</b><span>прыжок, выше при удержании</span></div>
+              <div><b>Q  или  SHIFT</b><span>переключить геометрию</span></div>
+              <div><b>ESC / P</b><span>пауза, рестарт, выход</span></div>
+              <div><b>R</b><span>перезапуск уровня</span></div>
+              <div><b>M</b><span>звук вкл / выкл</span></div>
+              <div><b>ENTER</b><span>старт и продолжение</span></div>
+            </div>
+            <div class="rule"></div>
+            <p>В кривом мире параллельные навесы сходятся в идеальной точке и становятся платформами. Прыгай, жми Q в воздухе и собирай чак-чак.</p>
+            <div class="screen-hint">ENTER / КЛИК — вернуться в меню</div>
+          </div>
+        </section>
+
+        <section class="screen panel-screen" data-screen="about">
+          <div class="panel">
+            <h2>ОБ ИГРЕ</h2>
+            <p class="accent">КОМАНДА: команда ИБ</p>
+            <div class="about-list">
+              <div>ИДЕЯ: неевклидова геометрия в Казани.</div>
+              <div>СТИЛЬ: античная стилизация — мрамор, бронза, лавр.</div>
+              <div>НАУКА: Н. И. Лобачевский, 1826, ректор КФУ 1827–1846.</div>
+              <div>ИСТОЧНИКИ: kpfu.ru · dm.kpfu.ru · astro.kpfu.ru</div>
+              <div>КАЗАНЬ: Баумана, КФУ, обсерватория, Кремль, Зилант.</div>
+              <div>АССЕТЫ: CC0-звуки Kenney; графика и музыка свои.</div>
+              <div>ИИ: Arena.ai Agent — код, тексты, графика, тесты.</div>
+              <div>ВЕРСИЯ: веб, 3 уровня + босс.</div>
+            </div>
+            <div class="screen-hint">ENTER / КЛИК — меню</div>
+          </div>
+        </section>
+
+        <section class="screen panel-screen small" data-screen="exit">
+          <div class="panel">
+            <h2>ВЫХОД</h2>
+            <p>Спасибо за игру!</p>
+            <p class="dim">Можно закрыть вкладку.</p>
+            <div class="screen-hint">ENTER — вернуться в меню</div>
+          </div>
+        </section>
+
+        <section class="screen panel-screen" data-screen="intro">
+          <div class="panel">
+            <h2 id="intro-title">УРОВЕНЬ</h2>
+            <div class="accent" id="intro-subtitle"></div>
+            <div class="rule"></div>
+            <p id="intro-fact"></p>
+            <p class="accent" id="intro-task"></p>
+            <div class="screen-hint">ENTER / ПРОБЕЛ — старт</div>
+          </div>
+        </section>
+
+        <section class="screen" data-screen="pause">
+          <div class="panel pause-panel">
+            <h2>ПАУЗА</h2>
+            <div class="menu-list" id="pause-list"></div>
+          </div>
+        </section>
+
+        <section class="screen" data-screen="death">
+          <div class="death-box">
+            <h2>СИНГУЛЯРНОСТЬ!</h2>
+            <p>Возврат к чекпоинту...</p>
+            <div class="screen-hint">ENTER — быстрее</div>
+          </div>
+        </section>
+
+        <section class="screen" data-screen="complete">
+          <div class="panel result-panel">
+            <h2>УРОВЕНЬ ПРОЙДЕН</h2>
+            <div class="accent" id="complete-name"></div>
+            <p id="complete-time"></p>
+            <p id="complete-stats"></p>
+            <div class="screen-hint">ENTER — дальше</div>
+          </div>
+        </section>
+
+        <section class="screen" data-screen="victory">
+          <h2 class="victory-title">ПОБЕДА!</h2>
+          <p class="victory-sub">Зилант отступает перед геометрией Лобачевского</p>
+          <p class="victory-body">Параллельные прямые пересеклись в идеальной точке — и Казань снова стала плоской, насколько этого желает Евклид.</p>
+          <p class="accent">КОМАНДА ИБ · КАЗАНСКИЙ УНИВЕРСИТЕТ · 1826 → СЕГОДНЯ</p>
+          <p class="dim">ИСТОЧНИКИ: kpfu.ru · dm.kpfu.ru · astro.kpfu.ru · unesco.ru</p>
+          <p id="victory-stats"></p>
+          <div class="screen-hint">ENTER — в главное меню</div>
+        </section>
+
+        <div id="hud">
+          <div id="hud-level"></div>
+          <div id="hud-stats"></div>
+          <div id="curv-box">
+            <span id="curv-label">ПЛОСКОСТЬ</span>
+            <div class="meter"><i id="curv-fill"></i></div>
+            <span class="key">Q</span>
+          </div>
+          <div id="boss-box">
+            <div>ЗИЛАНТ</div>
+            <div class="meter"><i id="boss-fill"></i></div>
+            <div class="hint">УДАРЬ В КРИВОМ МИРЕ</div>
+          </div>
+          <div id="hint-box">
+            <div class="keys-line">← → — идти · ПРОБЕЛ — прыжок · Q — кривизна</div>
+            <p id="hint-task"></p>
+          </div>
+        </div>
+
+        <div id="toast"></div>
+      </div>
+    </div>
     <div id="tap-hint">Нажмите, чтобы включить звук и начать игру</div>
   </div>
   <noscript>Для игры включите JavaScript.</noscript>
@@ -21,6 +151,7 @@
   <script src="src/art.js"></script>
   <script src="src/levels.js"></script>
   <script src="src/game.js"></script>
+  <script src="src/ui.js"></script>
   <script src="src/main.js"></script>
 </body>
 </html>

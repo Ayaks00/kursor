@@ -12,7 +12,7 @@ FILES = [
     'index.html',
     'css/style.css',
     'src/sfx-data.js', 'src/audio.js', 'src/input.js', 'src/art.js',
-    'src/levels.js', 'src/game.js', 'src/main.js',
+    'src/levels.js', 'src/game.js', 'src/ui.js', 'src/main.js',
     'README.md', 'CREDITS.md',
     'assets/sfx/jump.ogg', 'assets/sfx/coin.ogg', 'assets/sfx/fall.ogg',
     'assets/sfx/land.ogg', 'assets/sfx/break.ogg', 'assets/sfx/toggle.mp3',

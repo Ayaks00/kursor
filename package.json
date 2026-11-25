@@ -1,0 +1,44 @@
+{
+  "name": "kursor-lobachevsky",
+  "version": "1.0.0",
+  "description": "Лобачевский: Кривая Казань — десктопная игра",
+  "author": "команда ИБ",
+  "private": true,
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "pack": "electron-builder --dir",
+    "build": "electron-builder --win --linux"
+  },
+  "build": {
+    "appId": "ru.kursor.lobachevsky",
+    "productName": "Кривая Казань",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "main.js",
+      "app/**/*",
+      "assets/icon.png"
+    ],
+    "win": {
+      "icon": "assets/icon.png",
+      "target": [
+        "nsis",
+        "zip"
+      ]
+    },
+    "linux": {
+      "icon": "assets/icon.png",
+      "target": [
+        "AppImage",
+        "tar.gz"
+      ],
+      "category": "Game"
+    }
+  },
+  "devDependencies": {
+    "electron": "^45.5.0",
+    "electron-builder": "^26.18.0"
+  }
+}

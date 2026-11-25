@@ -1,12 +1,12 @@
-/* ПИКСЕЛЬНАЯ ГРАФИКА В АНТИЧНОМ СТИЛЕ.
-   Вся графика рисуется примитивами на низкоразрешённом canvas: мрамор, терракота,
-   бронза, лавр, греческий меандр, амфоры и античные колоннады. */
+
+
+
 (function (KZ) {
   'use strict';
 
   var A = {};
-  // Один «дизайнерский» пиксель старой сетки равен четырём настоящим пикселям
-  // логического мира 1920×1080. Внутри спрайтов это даёт место для мелких деталей.
+  
+  
   A.U = 4;
   var C = {
     marble: '#e9dfc4', marbleDim: '#c8b998', marbleDark: '#9a8a6d',
@@ -22,8 +22,8 @@
     ctx.fillRect(Math.round(x), Math.round(y), Math.round(w), Math.round(h));
   };
 
-  // Переводит координату центра объекта в логические пиксели, а внутренние
-  // размеры спрайта — в пиксели старой сетки (масштаб A.U).
+  
+  
   A.at = function (ctx, x, y, draw) {
     ctx.save();
     ctx.translate(x, y);
@@ -32,7 +32,7 @@
     ctx.restore();
   };
 
-  // Ступенчатый пиксельный ореол: мягкий свет без размытия графики.
+  
   A.halo = function (ctx, x, y, r, color, alpha) {
     ctx.save();
     for (var i = 3; i >= 1; i--) {
@@ -45,7 +45,7 @@
     ctx.restore();
   };
 
-  // Частица с затуханием и необязательным свечением.
+  
   A.drawParticle = function (ctx, q) {
     var t = Math.max(0, Math.min(1, q.life / (q.maxLife || 1)));
     ctx.save();
@@ -55,7 +55,7 @@
     ctx.restore();
   };
 
-  // Ударная волна: расширяющееся кольцо от точки события.
+  
   A.drawRing = function (ctx, fx) {
     var t = 1 - Math.max(0, fx.life) / fx.maxLife;
     ctx.save();
@@ -72,7 +72,7 @@
     ctx.restore();
   };
 
-  // Статичное затемнение краёв — глубина кадра, не анимированный фон.
+  
   A.vignette = function (ctx) {
     var u = A.U;
     var g = ctx.createRadialGradient(240 * u, 132 * u, 88 * u, 240 * u, 132 * u, 292 * u);
@@ -83,9 +83,9 @@
     ctx.fillRect(0, 0, 480 * u, 270 * u);
   };
 
-  // Заголовки — античный засечный шрифт, мелкий HUD — моноширинный для читаемости.
+  
   A.font = function (size, bold, mono) {
-    // Tahoma/Georgia есть на Windows, Chrome и Яндекс Браузере; DejaVu — запасной вариант на Linux.
+    
     var family = 'Georgia, "Times New Roman", "DejaVu Serif", serif';
     return (bold ? 'bold ' : '') + size + 'px ' + family;
   };
@@ -104,7 +104,7 @@
     ctx.fillText(str, Math.round(x), Math.round(y));
   };
 
-  // Греческий меандр — орнамент фризов, флагов и платформ.
+  
   A.ornament = function (ctx, x, y, w, color, phase) {
     ctx.save();
     ctx.fillStyle = color || C.gold;
@@ -189,7 +189,7 @@
     A.buildings(ctx, camX, 196, pal.farBuild, pal.win, 0.18, 3, 18);
     A.buildings(ctx, camX, 216, pal.midBuild, pal.win, 0.42, 11, 16);
 
-    // Античный рынок: терракотовые козырьки, драпировки, амфоры и вывески
+    
     for (var i = 0; i < 8; i++) {
       var bx = i * 82 - (camX * 0.62) % 82 - 40;
       A.rect(ctx, bx, 126, 66, 10, C.marbleDim);
@@ -199,7 +199,7 @@
       A.rect(ctx, bx + 8, 145, i % 2 ? 36 : 28, 2, C.goldDark);
       A.column(ctx, bx + 6, 156, 52, C.marbleDim);
       A.column(ctx, bx + 56, 156, 52, C.marbleDim);
-      // амфора у входа
+      
       A.rect(ctx, bx + 28, 202, 6, 9, C.terracotta);
       A.rect(ctx, bx + 27, 210, 8, 6, '#cf8053');
       A.rect(ctx, bx + 29, 199, 4, 3, C.terracotta);
@@ -218,7 +218,7 @@
   A.kfu = function (ctx, camX, time, pal) {
     A.rect(ctx, 0, 0, 480, 270, '#232b3e');
     A.stars(ctx, camX * 0.4, time, 36, 8, 104);
-    // Античная академия: мраморный портик, фронтон, фриз, ниши с бюстами
+    
     var ox = 190 - camX * 0.12;
     A.rect(ctx, ox - 136, 118, 272, 100, C.marbleDim);
     A.rect(ctx, ox - 144, 106, 288, 13, C.marble);
@@ -226,7 +226,7 @@
     A.rect(ctx, ox - 112, 102, 224, 4, C.gold);
     A.ornament(ctx, ox - 104, 96, 208, C.goldDark, 0);
     for (var c = 0; c < 7; c++) A.column(ctx, ox - 118 + c * 40, 119, 86, C.marble);
-    // скульптуры в нишах
+    
     for (var b = 0; b < 3; b++) {
       var bx = ox - 78 + b * 78;
       A.rect(ctx, bx, 140, 16, 30, '#8e8168');
@@ -236,7 +236,7 @@
     }
     A.rect(ctx, ox - 42, 88, 84, 2, C.goldDark);
     A.ornament(ctx, ox - 100, 108, 200, '#5a4a32', 0);
-    // каменная таблица с чертежом параллельных
+    
     A.rect(ctx, 20, 150, 76, 44, '#4a4a3f');
     A.rect(ctx, 23, 153, 70, 38, '#5b5947');
     ctx.strokeStyle = C.gold; ctx.lineWidth = 1;
@@ -250,7 +250,7 @@
   A.observatory = function (ctx, camX, time, pal) {
     A.rect(ctx, 0, 0, 480, 270, '#151f3a');
     A.stars(ctx, camX, time, 84, 6, 168);
-    // созвездия и небесная сфера
+    
     ctx.strokeStyle = 'rgba(217,177,92,0.35)'; ctx.lineWidth = 1;
     ctx.beginPath();
     for (var k = 0; k < 5; k++) {
@@ -263,13 +263,13 @@
     A.rect(ctx, mx + 6, 21, 20, 25, '#151f3a');
     A.rect(ctx, 0, 188, 480, 82, '#273047');
     for (var h = 0; h < 8; h++) A.rect(ctx, h * 68 - (camX * 0.15) % 68, 181 + (h % 3) * 10, 70, 30, '#30394d');
-    // каменная башня с бронзовым астролябием
+    
     var dx = 250 - camX * 0.24;
     A.rect(ctx, dx - 44, 154, 88, 64, C.marbleDim);
     for (var col = 0; col < 4; col++) A.column(ctx, dx - 38 + col * 23, 160, 52, C.marble);
     A.rect(ctx, dx - 50, 148, 100, 8, C.marble);
     A.pediment(ctx, dx - 36, 132, 72, C.marble);
-    // купол и прорезь телескопа
+    
     A.rect(ctx, dx - 30, 116, 60, 18, '#9c9a84');
     A.rect(ctx, dx - 20, 108, 40, 9, C.marble);
     A.rect(ctx, dx - 10, 101, 20, 8, C.marbleDim);
@@ -279,7 +279,7 @@
     ctx.beginPath(); ctx.arc(dx, 141, 11, 0, Math.PI * 2); ctx.stroke();
     A.rect(ctx, dx - 2, 139, 4, 4, C.goldLight);
     A.ornament(ctx, dx - 16, 172, 32, C.goldDark, 0);
-    // оливковые рощи на горизонте
+    
     for (var tr = 0; tr < 10; tr++) {
       var tx = tr * 58 - (camX * 0.3) % 58;
       A.rect(ctx, tx, 196, 2, 12, '#4a4a35');
@@ -292,7 +292,7 @@
     A.stars(ctx, camX, time, 40, 8, 100);
     A.rect(ctx, 406 - camX * 0.03, 20, 28, 28, C.goldLight);
     A.rect(ctx, 414 - camX * 0.03, 17, 24, 30, '#2a2231');
-    // древняя стена из крупных камней с зубцами
+    
     A.rect(ctx, 0, 168, 480, 102, '#8b6a50');
     for (var i = 0; i < 24; i++) {
       var bx = i * 22 - (camX * 0.35) % 22;
@@ -301,7 +301,7 @@
       A.rect(ctx, bx + 9, 192, 1, 14, '#6e533d');
     }
     A.ornament(ctx, 0, 210, 480, C.goldDark, 0);
-    // античная сторожевая башня (силуэт Сююмбике)
+    
     var tx = 352 - camX * 0.2;
     for (var tier = 0; tier < 5; tier++) {
       var w = 36 - tier * 4;
@@ -312,7 +312,7 @@
     }
     A.rect(ctx, tx - 8, 52, 16, 12, C.olive);
     A.rect(ctx, tx + 4, 50, 5, 8, '#2a2231');
-    // Зилант в небе — древний дракон с крыльями
+    
     A.dragonSilhouette(ctx, 92 - camX * 0.08, 60 + Math.sin(time * 1.4) * 8, 1.2, '#6d4a52');
     A.rect(ctx, 0, 232, 480, 38, '#59402f');
     A.ornament(ctx, 0, 234, 480, C.goldDark, 0);
@@ -330,14 +330,12 @@
     ctx.restore();
   };
 
-  // Статичная фоновая картинка (заранее сгенерированный PNG), а не анимация.
+  
   var bgImages = {};
   function bgImage(name) {
     if (!(name in bgImages)) {
-      var data = window.BG_DATA && window.BG_DATA[name];
-      if (!data || typeof Image === 'undefined') { bgImages[name] = null; return null; }
       var im = new Image();
-      im.src = data;
+      im.src = window.BG_DATA[name];
       bgImages[name] = im;
     }
     return bgImages[name];
@@ -349,7 +347,7 @@
       ctx.drawImage(im, 0, 0, 480 * A.U, 270 * A.U);
       return;
     }
-    // Пока картинка грузится — процедурный запасной вариант в старой сетке.
+    
     ctx.save();
     ctx.scale(A.U, A.U);
     var pal = level.palette;
@@ -382,21 +380,21 @@
         ctx.lineTo(x1 + nx * (offset + thickness), y1 + ny * (offset + thickness));
         ctx.closePath();
       }
-      // Тёмная подложка отделяет дорожку от любого фона.
+      
       slab(1.5, thick + 2);
       ctx.fillStyle = 'rgba(20,13,8,0.5)'; ctx.fill();
-      // Массив плиты с чётким контуром.
+      
       slab(0, thick);
       ctx.fillStyle = base; ctx.fill();
       ctx.strokeStyle = edge; ctx.lineWidth = 0.7; ctx.stroke();
-      // Яркая верхняя поверхность — по ней идёт игрок.
+      
       slab(-0.6, 2.4);
       ctx.fillStyle = top; ctx.fill();
       ctx.strokeStyle = 'rgba(255,244,208,0.8)'; ctx.lineWidth = 0.4; ctx.stroke();
-      // Тёмная нижняя кромка и тень под ней.
+      
       slab(thick - 1.6, 1.6);
       ctx.fillStyle = dark; ctx.fill();
-      // Каменные швы / древесная текстура / бронзовые заклёпки.
+      
       for (var d = 7; d < len; d += 11) {
         var px = x1 + dx * (d / len) + nx * 3;
         var py = y1 + dy * (d / len) + ny * 3;
@@ -432,7 +430,7 @@
       var chiton = curved ? C.gold : C.parchment;
       var cloak = curved ? C.olive : C.terracotta;
       if (curved) A.halo(ctx, 5, 7, 11 + Math.sin(time * 5) * 2, C.gold, 0.34);
-      // Тень, развевающийся плащ, складки хитона и сандалии.
+      
       A.rect(ctx, x - 2, y + 14, 14, 1, 'rgba(30,22,14,0.35)');
       A.rect(ctx, x - 2, y + 3, 3, 9, '#8c4f34');
       A.rect(ctx, x - 1, y + 4, 12, 7, cloak);
@@ -446,7 +444,7 @@
       A.rect(ctx, x + 6 - (run > 0 ? 1 : 0), y + 11, 3, 3, C.ink);
       A.rect(ctx, x + (run > 0 ? 1 : 0), y + 11, 3, 1, '#a88758');
       A.rect(ctx, x + 6 - (run > 0 ? 1 : 0), y + 11, 3, 1, '#a88758');
-      // Лицо, волосы, глаз, лавровый венок с отдельными листиками.
+      
       A.rect(ctx, x + 1, y, 9, 6, '#d9b58a');
       A.rect(ctx, x + 1, y + 4, 9, 2, '#c9a276');
       A.rect(ctx, x + 0, y - 2, 11, 3, '#7e5b3e');
@@ -458,7 +456,7 @@
       A.rect(ctx, x + 2, y + 2, 1, 0.5, C.parchment);
       A.rect(ctx, x + 6, y + 2, 1, 0.5, C.parchment);
       A.rect(ctx, x + 5, y + 2, 1, 2, '#a37d59');
-      // Свиток в руке: жёлтая печать видна и в плоском режиме.
+      
       A.rect(ctx, x + 8, y + 6, 3, 4, C.parchment);
       A.rect(ctx, x + 8, y + 6, 3, 1, C.marble);
       A.rect(ctx, x + 9, y + 8, 1, 1, C.gold);
@@ -474,7 +472,7 @@
       var x = 0, y = 0;
       A.halo(ctx, x, y, 10 + Math.sin(time * 4 + phase) * 2, shine, 0.5);
       if (item.type === 'chakchak') {
-        // Амфора с чак-чаком: ручки, роспись, гранёные кусочки халвы.
+        
         A.rect(ctx, x - 3, y - 3, 7, 6, C.terracotta);
         A.rect(ctx, x - 2, y - 2, 5, 4, '#c97a4c');
         A.rect(ctx, x - 4, y - 5, 9, 3, '#cf8053');
@@ -490,7 +488,7 @@
         A.rect(ctx, x - 5, y - 1, 1, 1, C.gold);
         A.rect(ctx, x + 4, y - 1, 1, 1, C.gold);
       } else {
-        // Пергаментный свиток: скатки, строчки чернил, печать.
+        
         A.rect(ctx, x - 3, y - 4, 7, 8, C.parchment);
         A.rect(ctx, x - 4, y - 5, 9, 2, C.marble);
         A.rect(ctx, x - 4, y + 3, 9, 2, C.marble);
@@ -556,7 +554,7 @@
       ctx.globalAlpha = 1;
       A.rect(ctx, -r, -r + 2, r * 2, r * 2 - 4, '#4a3a2b');
       A.rect(ctx, -r + 2, -r, r * 2 - 4, r * 2, '#4a3a2b');
-      // Бронзовая арматура и грани чёрного камня.
+      
       A.rect(ctx, -r + 3, -r + 2, 3, 3, C.goldLight);
       A.rect(ctx, r - 5, r - 6, 2, 2, C.gold);
       A.rect(ctx, -r - 1, -1, 3, 2, C.goldDark);
@@ -596,7 +594,7 @@
       var x = 0, y = 0;
       var flap = Math.sin(time * 8) * 5;
       A.halo(ctx, 0, 0, 26 + Math.sin(time * 3) * 4, b.flash > 0 ? '#ffffff' : '#e3c57d', 0.4);
-      // Кожаные крылья с рёбрами, бронзовая чешуя, золотой гребень и рога.
+      
       A.rect(ctx, -26, -12 + flap, 18, 8, '#6e5a3d');
       A.rect(ctx, -24, -10 + flap, 14, 1, '#a28859');
       A.rect(ctx, -22, -8 + flap, 12, 1, '#a28859');
@@ -665,7 +663,7 @@
     });
   };
 
-  // Уличный бронзовый фонарь: тёплый свет и мелкие детали на каждом объекте.
+  
   A.lantern = function (ctx, x, y, time) {
     A.at(ctx, x, y, function (ctx) {
       var gx = 0, gy = -20;
@@ -687,7 +685,7 @@
   };
 
   A.convergenceGuides = function (ctx, level, strength, phase) {
-    if (!level.guides || strength < 0.05) return;
+    if (strength < 0.05) return;
     ctx.save();
     ctx.globalAlpha = Math.min(1, strength) * 0.72;
     ctx.strokeStyle = C.gold;

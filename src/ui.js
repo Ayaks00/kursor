@@ -1,4 +1,4 @@
-/* HTML-интерфейс: весь текст — настоящие DOM-элементы, canvas рисует только мир. */
+
 (function (KZ) {
   'use strict';
 
@@ -39,9 +39,9 @@
     this.buildPauseButtons();
     this.resize();
     window.addEventListener('resize', function () { self.resize(); });
-    if (window.requestAnimationFrame) window.requestAnimationFrame(function () { self.resize(); });
+    requestAnimationFrame(function () { self.resize(); });
 
-    // Клик по экрану «Как играть» и титрам возвращает в меню.
+    
     this.root.addEventListener('click', function (e) {
       if (e.target && e.target.tagName === 'BUTTON') return;
       var st = self.game.state;
@@ -51,8 +51,7 @@
   }
 
   UI.prototype.resize = function () {
-    var w = this.stage.clientWidth || (this.root && this.root.clientWidth) || window.innerWidth || 480;
-    w = Math.max(320, w);
+    var w = this.stage.clientWidth;
     this.stage.style.setProperty('--u', (w / 480) + 'px');
   };
 
@@ -92,7 +91,6 @@
   };
 
   UI.prototype.highlight = function (buttons, index) {
-    if (!buttons) return;
     for (var i = 0; i < buttons.length; i++) buttons[i].classList.toggle('selected', i === index);
   };
 

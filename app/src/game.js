@@ -38,6 +38,7 @@
     this.curvature = 0;
     this.target = 0;
     this.warp = 0;
+    this.warpMax = 0.5;
     this.switches = 0;
     this.camX = 0;
     this.menuIndex = 0;
@@ -70,7 +71,7 @@
     this.state = s;
     this.stateTime = 0;
     if (s === 'menu') this.menuIndex = 0;
-    if (s === 'menu') this.audio.setTheme('menu');
+    if (s === 'menu' || s === 'levels') this.audio.setTheme('menu');
     if (s === 'play') this.audio.setTheme(this.level.boss ? 'boss' : 'game');
     if (s === 'victory') this.audio.setTheme('victory');
   };
@@ -86,6 +87,7 @@
     this.curvature = 0;
     this.target = 0;
     this.warp = 0.35;
+    this.warpMax = 0.5;
     this.switches = 0;
     this.hintTime = lv.id === 1 ? 14 : 0;
     this.hintDismissed = false;
@@ -243,6 +245,7 @@
     if (this.toastTime > 0) this.toastTime -= dt;
 
     if (this.state === 'menu') this.updateMenu();
+    else if (this.state === 'levels') this.updateLevelMenu();
     else if (this.state === 'how') {
       if (this.input.confirmPressed() || this.input.mouse.clicked) this.setState('menu');
     } else if (this.state === 'intro') {
@@ -307,6 +310,7 @@
   Game.prototype.menuItems = function () {
     var list = [{ id: 'new', label: 'НОВАЯ ИГРА' }];
     if (this.save.unlocked > 0) list.push({ id: 'continue', label: 'ПРОДОЛЖИТЬ' });
+    list.push({ id: 'levels', label: 'ВЫБОР УРОВНЯ' });
     list.push({ id: 'how', label: 'КАК ИГРАТЬ' });
     return list;
   };
@@ -317,7 +321,47 @@
       this.loadLevel(0);
     } else if (id === 'continue') {
       this.loadLevel(clamp(this.save.unlocked, 0, KZ.LEVELS.length - 1));
+    } else if (id === 'levels') {
+      this.menuIndex = 0;
+      this.setState('levels');
     } else if (id === 'how') this.setState('how');
+  };
+
+  Game.prototype.levelItems = function () {
+    var list = [];
+    for (var i = 0; i < KZ.LEVELS.length; i++) {
+      var locked = i > this.save.unlocked;
+      list.push({ id: 'level:' + i, label: (i + 1) + '. ' + KZ.LEVELS[i].name + (locked ? ' — ЗАКРЫТ' : ''), locked: locked });
+    }
+    list.push({ id: 'back', label: 'НАЗАД' });
+    return list;
+  };
+
+  Game.prototype.updateLevelMenu = function () {
+    var items = this.levelItems();
+    if (this.input.upPressed()) this.menuIndex = (this.menuIndex + items.length - 1) % items.length;
+    if (this.input.downPressed()) this.menuIndex = (this.menuIndex + 1) % items.length;
+    if (this.input.pausePressed()) {
+      this.audio.play('click', 0.4);
+      this.setState('menu');
+      return;
+    }
+    if (this.input.confirmPressed()) this.levelAction(items[this.menuIndex].id);
+  };
+
+  Game.prototype.levelAction = function (id) {
+    if (id === 'back') {
+      this.audio.play('click', 0.4);
+      this.setState('menu');
+      return;
+    }
+    var idx = parseInt(id.split(':')[1], 10);
+    if (idx > this.save.unlocked) {
+      this.audio.play('click', 0.2);
+      return;
+    }
+    this.audio.play('click', 0.5);
+    this.loadLevel(idx);
   };
 
   Game.prototype.advance = function () {
@@ -350,14 +394,21 @@
     if (inp.restartPressed()) { this.restartLevel(); return; }
     if (inp.togglePressed()) {
       this.target = this.target ? 0 : 1;
-      this.warp = 0.5;
+      this.warp = 0.72;
+      this.warpMax = 0.72;
       this.switches++;
       this.audio.play('toggle', 0.5);
-      this.burst(this.player.x + 5 * K, this.player.y + 6 * K, '#e3c57d', 10, { speed: 2, glow: true });
-      this.ring(this.player.x + 5 * K, this.player.y + 6 * K, '#f5e3ab', 28, 0.55);
-      this.ring(this.level.vanish.x, this.level.vanish.y, '#e3c57d', 34, 0.7);
-      this.flash('#e3c57d', 0.12, 0.28);
-      this.shake(0.9, 0.22);
+      var px = this.player.x + 5 * K, py = this.player.y + 6 * K;
+      var vx = this.level.vanish.x, vy = this.level.vanish.y;
+      var tint = this.target ? '#8ee9f2' : '#f2d68a';
+      this.burst(px, py, '#f5e3ab', 22, { speed: 2.6, glow: true, gravity: -0.01 });
+      this.burst(vx, vy, tint, 18, { speed: 3.2, glow: true, gravity: 0 });
+      this.ring(px, py, '#f5e3ab', 26, 0.5);
+      this.ring(px, py, tint, 44, 0.7);
+      this.ring(vx, vy, '#e3c57d', 38, 0.65);
+      this.ring(vx, vy, tint, 72, 0.9);
+      this.flash(tint, 0.18, 0.34);
+      this.shake(1.4, 0.3);
     }
     this.curvature += (this.target - this.curvature) * Math.min(1, dt * 10);
     if (Math.abs(this.target - this.curvature) < 0.005) this.curvature = this.target;
@@ -513,7 +564,7 @@
       if (this.stateTime > 2.4) this.setState('victory');
       return;
     }
-    b.x = 480 * K + Math.sin(this.time * 0.85) * 210 * K;
+    b.x = 480 * K + Math.sin(this.time * 0.85) * 90 * K;
     b.y = 118 * K + Math.sin(this.time * 1.7) * 10 * K;
     if (b.flash > 0) b.flash -= dt;
     if (b.hitCooldown > 0) b.hitCooldown -= dt;
@@ -605,8 +656,8 @@
     s.save();
     
     if (!warping) s.translate(ox, oy);
-    if (this.state === 'menu' || this.state === 'how') {
-      A.backdrop(s, KZ.LEVELS[3], 0, this.time);
+    if (this.state === 'menu' || this.state === 'how' || this.state === 'levels') {
+      A.backdrop(s, KZ.LEVELS[4], 0, this.time);
       s.fillStyle = 'rgba(9,9,22,0.55)';
       s.fillRect(0, 0, W, H);
       A.halo(s, 240, 74, 84, '#d9b15c', 0.12);
@@ -620,19 +671,38 @@
 
     if (warping) {
       c.clearRect(0, 0, W, H);
-      var k = Math.sin((this.warp / 0.5) * Math.PI);
+      var k = Math.sin((this.warp / this.warpMax) * Math.PI);
       var dir = this.target ? 1 : -1;
       var SLICE = 3 * K;
       for (var y = 0; y < H + SLICE; y += SLICE) {
         var sy = Math.min(y, H - SLICE);
-        var dx = Math.sin((y - this.level.vanish.y) / H * Math.PI) * 7 * K * k * dir;
+        var dx = Math.sin((y - this.level.vanish.y) / H * Math.PI) * 11 * K * k * dir;
         c.drawImage(this.scene, 0, sy * this.scale, this.scene.width, SLICE * this.scale,
           dx - K + ox, y - K + oy, W + 2 * K, SLICE);
       }
-      c.globalAlpha = 0.22 * k;
+      var vx = this.level.vanish.x, vy = this.level.vanish.y;
+      c.save();
+      c.globalAlpha = 0.6 * k;
+      c.lineWidth = K * 0.5;
+      for (var ri = 0; ri < 5; ri++) {
+        c.strokeStyle = ri % 2 ? '#8ee9f2' : '#f2d68a';
+        c.beginPath();
+        c.arc(vx, vy, (26 + ri * 46) * K * (0.4 + k), 0, Math.PI * 2);
+        c.stroke();
+      }
+      c.globalAlpha = 0.32 * k;
+      for (var ra = 0; ra < 14; ra++) {
+        var ang = ra / 14 * Math.PI * 2 + this.time * 3 * dir;
+        c.strokeStyle = ra % 3 ? '#f5e3ab' : '#8ee9f2';
+        c.beginPath();
+        c.moveTo(vx + Math.cos(ang) * 18 * K, vy + Math.sin(ang) * 18 * K);
+        c.lineTo(vx + Math.cos(ang) * 290 * K, vy + Math.sin(ang) * 290 * K);
+        c.stroke();
+      }
+      c.globalAlpha = 0.3 * k;
       c.fillStyle = '#e3c57d';
       c.fillRect(0, 0, W, H);
-      c.globalAlpha = 1;
+      c.restore();
     }
     
     if (this.flashTime > 0 && this.flashAlpha > 0) {

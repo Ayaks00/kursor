@@ -256,3 +256,14 @@ h1, h2 {
 @keyframes blink { 50% { opacity: 0.25; } }
 
 .screen[data-screen="how"].active { pointer-events: auto; }
+
+.screen[data-screen="levels"] { justify-content: flex-start; padding-top: calc(var(--u) * 22); }
+.screen[data-screen="levels"] .level-title { font-size: calc(var(--u) * 15); }
+.level-list {
+  display: flex; flex-direction: column; gap: calc(var(--u) * 3);
+  width: calc(var(--u) * 300); margin-top: calc(var(--u) * 10);
+}
+.level-list .game-btn { height: calc(var(--u) * 17); font-size: calc(var(--u) * 8); letter-spacing: calc(var(--u) * 0.2); }
+.game-btn:disabled { opacity: 0.42; cursor: default; }
+.game-btn:disabled:hover { background: #2c2419; border-color: #96703a; color: var(--dim); }
+.level-hint { margin-top: calc(var(--u) * 8); font-size: calc(var(--u) * 7); color: var(--dim); }

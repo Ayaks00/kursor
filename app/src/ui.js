@@ -13,6 +13,7 @@
 
     this.menuList = document.getElementById('menu-list');
     this.pauseList = document.getElementById('pause-list');
+    this.levelList = document.getElementById('level-list');
     this.hud = document.getElementById('hud');
     this.toast = document.getElementById('toast');
     this.el = {
@@ -36,6 +37,7 @@
     };
 
     this.menuSignature = '';
+    this.levelSignature = '';
     this.buildPauseButtons();
     this.resize();
     window.addEventListener('resize', function () { self.resize(); });
@@ -78,6 +80,20 @@
     });
   };
 
+  UI.prototype.buildLevelButtons = function () {
+    var self = this;
+    var items = this.game.levelItems();
+    var signature = items.map(function (it) { return it.id + (it.locked ? 'x' : 'o'); }).join('|');
+    if (signature === this.levelSignature) return;
+    this.levelSignature = signature;
+    this.levelList.innerHTML = '';
+    this.levelButtons = items.map(function (it) {
+      var b = self.makeButton(it.label, function () { self.game.levelAction(it.id); }, self.levelList);
+      b.disabled = !!it.locked;
+      return b;
+    });
+  };
+
   UI.prototype.buildPauseButtons = function () {
     var self = this;
     var actions = [
@@ -106,6 +122,10 @@
     if (state === 'menu') {
       this.buildMenuButtons();
       this.highlight(this.menuButtons, game.menuIndex);
+    }
+    if (state === 'levels') {
+      this.buildLevelButtons();
+      this.highlight(this.levelButtons, game.menuIndex);
     }
     if (state === 'pause') this.highlight(this.pauseButtons, game.menuIndex);
 

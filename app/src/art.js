@@ -436,6 +436,20 @@
           A.rect(ctx, px + 2, py + 1, 3, 0.5, '#fff4d0');
         }
       }
+      for (var sm = 6; sm < len - 2; sm += 18) {
+        var sx = x1 + dx * (sm / len);
+        var sy = y1 + dy * (sm / len);
+        if (style === 'stone') {
+          A.fineRect(ctx, sx + nx * 1.2, sy + ny * 1.2, 0.3, 4.6, 'rgba(40,30,20,0.6)');
+          A.fineRect(ctx, sx + nx * 4.8, sy + ny * 4.8, 3.2, 0.25, 'rgba(255,246,214,0.45)');
+        } else if (style === 'wood') {
+          A.fineRect(ctx, sx + nx * 1.4, sy + ny * 1.4, 0.35, 4.8, 'rgba(54,34,20,0.6)');
+          A.fineRect(ctx, sx + nx * 5, sy + ny * 5, 2, 0.25, 'rgba(255,220,160,0.35)');
+        } else {
+          A.fineRect(ctx, sx + nx * 2, sy + ny * 2, 0.6, 0.6, '#fff2c4');
+          A.fineRect(ctx, sx + nx * 5, sy + ny * 5, 0.6, 0.6, '#8c6a3a');
+        }
+      }
       ctx.beginPath();
       ctx.moveTo(x1 + nx * 0.2, y1 + ny * 0.2);
       ctx.lineTo(x2 + nx * 0.2, y2 + ny * 0.2);
@@ -541,6 +555,10 @@
         A.rect(ctx, x + 4, y - 2, 2, 3, C.bronzeDark);
         A.rect(ctx, x - 5, y - 1, 1, 1, C.gold);
         A.rect(ctx, x + 4, y - 1, 1, 1, C.gold);
+        A.fineRect(ctx, x - 2.75, y - 4.25, 0.5, 0.5, '#fff3c8');
+        A.fineRect(ctx, x + 1.25, y - 3.75, 0.5, 0.5, '#ffe3a0');
+        A.fineRect(ctx, x - 0.25, y + 1.75, 0.5, 0.5, '#fff8dd');
+        A.fineRect(ctx, x + 3.25, y - 0.25, 0.5, 0.5, C.goldLight);
       } else {
         
         A.rect(ctx, x - 3, y - 4, 7, 8, C.parchment);
@@ -644,6 +662,10 @@
       A.rect(ctx, 7, 12, 2, 8, '#6c4a24');
       A.rect(ctx, 13, 16, 1, 2, C.gold);
       A.rect(ctx, 2, 27, 12, 1, C.goldDark);
+      A.ornament(ctx, 2, 25, 12, C.goldDark, 0);
+      A.fineRect(ctx, -2.25, -6.25, 0.5, 36, 'rgba(255,248,220,0.55)');
+      A.fineRect(ctx, 19.75, -6.25, 0.5, 36, 'rgba(255,248,220,0.4)');
+      A.fineRect(ctx, 4.25, 3.25, 0.5, 22, 'rgba(255,246,200,0.5)');
     });
   };
 
@@ -744,6 +766,10 @@
       A.rect(ctx, -2, -29, 5, 1, C.gold);
       A.rect(ctx, -1, -30, 3, 1, '#7a6038');
       A.rect(ctx, 3, -24, 1, 2, C.bronzeDark);
+      A.fineRect(ctx, -2.25, -25.75, 0.5, 3.5, 'rgba(255,232,170,0.65)');
+      A.fineRect(ctx, 1.75, -25.75, 0.5, 3.5, 'rgba(255,232,170,0.45)');
+      A.fineRect(ctx, -0.25, -28.5, 0.5, 0.5, C.goldLight);
+      A.fineRect(ctx, -0.25, -22.25, 0.5, 0.5, '#8c6a3a');
       A.halo(ctx, gx, gy - 5, 14 + flicker, '#ffce6a', 0.5);
       A.halo(ctx, gx, gy - 5, 7 + flicker * 0.5, '#fff3c8', 0.35);
     });

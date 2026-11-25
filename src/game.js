@@ -226,7 +226,7 @@
     if (this.toastTime > 0) this.toastTime -= dt;
 
     if (this.state === 'menu') this.updateMenu();
-    else if (this.state === 'how' || this.state === 'exit') {
+    else if (this.state === 'how') {
       if (this.input.confirmPressed() || this.input.mouse.clicked) this.setState('menu');
     } else if (this.state === 'intro') {
       if (this.input.confirmPressed()) this.setState('play');
@@ -291,7 +291,6 @@
     var list = [{ id: 'new', label: 'НОВАЯ ИГРА' }];
     if (this.save.unlocked > 0) list.push({ id: 'continue', label: 'ПРОДОЛЖИТЬ' });
     list.push({ id: 'how', label: 'КАК ИГРАТЬ' });
-    list.push({ id: 'exit', label: 'ВЫХОД' });
     return list;
   };
 
@@ -302,7 +301,6 @@
     } else if (id === 'continue') {
       this.loadLevel(clamp(this.save.unlocked, 0, KZ.LEVELS.length - 1));
     } else if (id === 'how') this.setState('how');
-    else if (id === 'exit') this.setState('exit');
   };
 
   Game.prototype.advance = function () {
@@ -589,7 +587,7 @@
     s.save();
     // При схождении тряска применяется при копировании полос; здесь её нет.
     if (!warping) s.translate(ox, oy);
-    if (this.state === 'menu' || this.state === 'how' || this.state === 'exit') {
+    if (this.state === 'menu' || this.state === 'how') {
       A.backdrop(s, KZ.LEVELS[3], 0, this.time);
       s.fillStyle = 'rgba(9,9,22,0.55)';
       s.fillRect(0, 0, W, H);

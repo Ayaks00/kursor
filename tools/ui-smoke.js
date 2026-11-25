@@ -25,7 +25,7 @@ El.prototype.appendChild = function (child) { this.children.push(child); return 
 El.prototype.querySelectorAll = function () { return screens; };
 Object.defineProperty(El.prototype, 'innerHTML', { set() { this.children = []; }, get() { return ''; } });
 
-const screenNames = ['menu','how','exit','intro','pause','death','complete','victory'];
+const screenNames = ['menu','how','intro','pause','death','complete','victory'];
 const screens = screenNames.map(n => { const e = new El('screen-' + n); e.setAttribute('data-screen', n); return e; });
 const ids = ['ui','stage','menu-list','pause-list','hud','toast','hud-level','hud-stats','curv-label',
   'curv-fill','boss-box','boss-fill','hint-box','hint-task','intro-title','intro-subtitle','intro-fact',
@@ -58,7 +58,7 @@ const game = new KZ.Game(canvas, new KZ.Input(canvas), new KZ.AudioSystem());
 const ui = new KZ.UI(game);
 game.ui = ui;
 let errors = 0;
-for (const state of ['menu','how','exit','intro','play','pause','death','complete','victory']) {
+for (const state of ['menu','how','intro','play','pause','death','complete','victory']) {
   if (state === 'intro' || state === 'play' || state === 'pause' || state === 'death' || state === 'complete') game.loadLevel(0);
   game.setState(state);
   game.stateTime = 3;

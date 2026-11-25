@@ -39,11 +39,11 @@
     window.addEventListener('resize', function () { self.resize(); });
     if (window.requestAnimationFrame) window.requestAnimationFrame(function () { self.resize(); });
 
-    // Клик по экранам «Как играть», «Выход» и титрам возвращает в меню.
+    // Клик по экрану «Как играть» и титрам возвращает в меню.
     this.root.addEventListener('click', function (e) {
       if (e.target && e.target.tagName === 'BUTTON') return;
       var st = self.game.state;
-      if (st === 'how' || st === 'exit') self.game.setState('menu');
+      if (st === 'how') self.game.setState('menu');
       else if (st === 'victory' && self.game.stateTime > 1.5) self.game.setState('menu');
     });
   }

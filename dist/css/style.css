@@ -81,7 +81,6 @@ h1, h2 {
   font-size: calc(var(--u) * 12);
   letter-spacing: calc(var(--u) * 1.4);
 }
-.screen[data-screen="menu"] .tagline { margin-top: calc(var(--u) * 8); font-size: calc(var(--u) * 9); }
 .menu-list {
   display: flex; flex-direction: column; gap: calc(var(--u) * 4);
   width: calc(var(--u) * 188); margin-top: calc(var(--u) * 12);
@@ -107,12 +106,9 @@ h1, h2 {
   display: flex; flex-direction: column; gap: calc(var(--u) * 3);
   font-size: calc(var(--u) * 8); color: var(--dim);
 }
-.controls .dim { color: #a89a7d; }
 
 /* Панели с текстом */
 .panel-screen { justify-content: center; }
-.panel-screen[data-screen="how"] .panel,
-.panel-screen[data-screen="about"] .panel { transform: translateY(calc(var(--u) * 6)); }
 .panel {
   display: flex; flex-direction: column; gap: calc(var(--u) * 6);
   background: rgba(36, 29, 22, 0.97);
@@ -126,7 +122,6 @@ h1, h2 {
 .panel .rule { height: 1px; background: #96703a; margin: calc(var(--u) * 2) 0; }
 .panel p { color: var(--parchment); }
 .panel .accent { color: var(--gold); }
-.panel .dim { color: var(--dim); }
 .screen-hint {
   position: static;
   margin-top: auto;
@@ -140,11 +135,7 @@ h1, h2 {
 .keys > div { display: flex; gap: calc(var(--u) * 6); }
 .keys b { color: var(--gold); font-weight: bold; min-width: calc(var(--u) * 120); }
 .keys span { color: var(--parchment); }
-.about-list { display: grid; gap: calc(var(--u) * 4); text-align: left; }
-.about-list > div { color: var(--parchment); }
 
-.panel-screen[data-screen="exit"] .panel { width: calc(var(--u) * 268); text-align: center; }
-.panel-screen[data-screen="exit"] h2 { font-size: calc(var(--u) * 18); }
 .panel-screen[data-screen="intro"] .panel { width: calc(var(--u) * 432); text-align: left; }
 .panel-screen[data-screen="intro"] h2 { font-size: calc(var(--u) * 13); }
 .panel-screen[data-screen="intro"] .screen-hint { text-align: center; }
@@ -160,18 +151,6 @@ h1, h2 {
 .death-box h2 { color: #c45646; font-size: calc(var(--u) * 20); }
 .death-box p { font-size: calc(var(--u) * 10); }
 .death-box .screen-hint { margin-top: 0; }
-
-/* Победа */
-.screen[data-screen="victory"] {
-  justify-content: center;
-  gap: calc(var(--u) * 5);
-  padding: calc(var(--u) * 14) calc(var(--u) * 28);
-}
-.victory-title { font-size: calc(var(--u) * 26); }
-.victory-sub { color: var(--gold); font-size: calc(var(--u) * 10); }
-.victory-body { max-width: calc(var(--u) * 420); font-size: calc(var(--u) * 9); }
-.screen[data-screen="victory"] p { font-size: calc(var(--u) * 9); }
-.screen[data-screen="victory"] .screen-hint { margin-top: calc(var(--u) * 4); }
 
 /* HUD */
 #hud { display: none; position: absolute; inset: 0; }
@@ -237,7 +216,4 @@ h1, h2 {
 #tap-hint.hidden { display: none; }
 @keyframes blink { 50% { opacity: 0.25; } }
 
-.screen[data-screen="how"].active,
-.screen[data-screen="about"].active,
-.screen[data-screen="exit"].active,
-.screen[data-screen="victory"].active { pointer-events: auto; }
+.screen[data-screen="how"].active { pointer-events: auto; }

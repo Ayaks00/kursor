@@ -13,8 +13,8 @@
   function I(x, y, type) { return { x: x, y: y, type: type || 'postulate' }; }
   function C(x, y) { return { x: x, y: y }; }
   function S(x, y, w) { return { type: 'spikes', x: x, y: y, w: w }; }
-  function O(x, y, ax, ay, bx, by, speed) {
-    return { type: 'orb', x: x, y: y, ax: ax, ay: ay, bx: bx, by: by, speed: speed || 1, r: 7 };
+  function O(x, y, ax, ay, bx, by, speed, r, plane) {
+    return { type: 'orb', x: x, y: y, ax: ax, ay: ay, bx: bx, by: by, speed: speed || 1, r: r || 7, plane: plane };
   }
 
   var levels = [
@@ -33,7 +33,7 @@
       gravity: 0.22, jump: -5.2, speed: 2.15,
       platforms: [
         P(0, 220, 380, 220, { style: 'wood' }),
-        P(430, 215, 620, 215, { kind: 'flat', style: 'wood' }),
+        P(430, 215, 620, 215, { kind: 'flat', style: 'wood', drift: { speed: 1.1, amp: 5, phase: 0.6 } }),
         P(620, 214, 780, 196, { ca: [620, 214], cb: [780, 196], kind: 'curve', style: 'metal' }),
         P(800, 200, 980, 200, { kind: 'flat', style: 'wood' }),
         P(1030, 190, 1220, 190, { kind: 'curve', style: 'metal' }),
@@ -47,7 +47,7 @@
       ],
       items: [I(120, 192, 'chakchak'), I(250, 148), I(520, 188, 'chakchak'), I(690, 128), I(880, 170), I(1150, 126, 'chakchak'), I(1300, 150), I(1550, 90), I(1740, 180, 'chakchak'), I(1900, 182)],
       checkpoints: [C(500, 215), C(1060, 190), C(1660, 210)],
-      hazards: [S(390, 224, 34), O(1000, 150, 1000, 110, 1000, 176, 0.7), S(1480, 224, 46), S(790, 224, 20)],
+      hazards: [S(390, 224, 34), O(1000, 150, 1000, 110, 1000, 176, 0.7), S(1480, 224, 46), S(790, 224, 20), O(880, 150, 860, 120, 900, 170, 1, 6, 1)],
       lamps: [[170, 220], [560, 215], [890, 200], [1320, 180], [1800, 210]],
       goal: { x: 1940, y: 203 }
     },
@@ -67,7 +67,7 @@
       platforms: [
         P(0, 220, 300, 220),
         P(360, 205, 560, 205, { kind: 'flat', style: 'wood' }),
-        P(560, 204, 700, 184, { kind: 'curve', style: 'metal' }),
+        P(560, 204, 700, 184, { kind: 'curve', style: 'metal', drift: { speed: 1.4, amp: 6, phase: 1.2 } }),
         P(720, 182, 920, 182, { kind: 'flat', style: 'wood' }),
         P(920, 180, 1100, 180, { kind: 'flat', style: 'wood' }),
         P(1100, 210, 1400, 140, { ca: [1100, 210], cb: [1264, 175], style: 'metal' }),
@@ -83,7 +83,7 @@
       ],
       items: [I(140, 190, 'chakchak'), I(480, 128), I(640, 158), I(820, 100), I(1000, 150), I(1180, 120), I(1350, 110, 'chakchak'), I(1550, 118), I(1750, 150), I(2010, 110), I(2180, 160, 'chakchak')],
       checkpoints: [C(400, 205), C(1120, 210), C(1900, 190)],
-      hazards: [S(310, 224, 42), O(920, 150, 920, 100, 920, 170, 0.9), S(1820, 224, 30), O(2000, 190, 2000, 150, 2000, 205, 1.1), S(710, 224, 20)],
+      hazards: [S(310, 224, 42), O(920, 150, 920, 100, 920, 170, 0.9), S(1820, 224, 30), O(2000, 190, 2000, 150, 2000, 205, 1.1), S(710, 224, 20), O(1700, 160, 1660, 130, 1740, 180, 0.8, 6, 0)],
       lamps: [[140, 220], [780, 182], [1520, 195], [1980, 190]],
       goal: { x: 2200, y: 183 }
     },
@@ -105,7 +105,7 @@
         P(400, 210, 640, 210, { kind: 'flat', style: 'metal' }),
         P(680, 190, 860, 190, { kind: 'flat', style: 'metal' }),
         P(680, 205, 860, 168, { kind: 'curve', style: 'metal' }),
-        P(900, 175, 1080, 175, { kind: 'curve', style: 'metal' }),
+        P(900, 175, 1080, 175, { kind: 'curve', style: 'metal', drift: { speed: 1.2, amp: 5, phase: 2.1 } }),
         P(1080, 174, 1280, 174, { kind: 'flat', style: 'metal' }),
         P(1280, 195, 1580, 160, { kind: 'curve', style: 'metal' }),
         P(1610, 180, 1820, 180, { kind: 'flat', style: 'metal' }),
@@ -114,11 +114,12 @@
         P(2240, 200, 2450, 200, { kind: 'curve', style: 'metal' }),
         P(240, 150, 340, 150, { style: 'metal' }),
         P(980, 118, 1080, 118),
-        P(1660, 128, 1760, 128)
+        P(1660, 128, 1760, 128),
+        P(1180, 132, 1320, 132, { kind: 'pulse', style: 'metal' })
       ],
       items: [I(150, 188, 'chakchak'), I(290, 128), I(520, 180), I(760, 140), I(950, 145, 'chakchak'), I(1160, 145), I(1450, 128), I(1700, 106, 'chakchak'), I(1900, 150), I(2130, 122), I(2380, 170, 'chakchak')],
       checkpoints: [C(430, 210), C(920, 175), C(1640, 180), C(2270, 200)],
-      hazards: [S(350, 224, 44), O(620, 160, 620, 110, 620, 185, 0.8), O(1120, 140, 1060, 120, 1200, 160, 0.9), S(1830, 224, 34), O(2050, 130, 2000, 110, 2120, 150, 1.2)],
+      hazards: [S(350, 224, 44), O(620, 160, 620, 110, 620, 185, 0.8), O(1120, 140, 1060, 120, 1200, 160, 0.9), S(1830, 224, 34), O(2050, 130, 2000, 110, 2120, 150, 1.2), O(760, 150, 730, 120, 790, 170, 1, 6, 1)],
       lamps: [[220, 220], [970, 175], [1700, 180], [2300, 200]],
       goal: { x: 2400, y: 193 }
     },
@@ -180,9 +181,10 @@
         P(320, 168, 440, 168, { kind: 'flat', style: 'metal' }),
         P(520, 168, 640, 168, { kind: 'flat', style: 'metal' }),
         P(760, 180, 880, 180, { kind: 'curve', style: 'wood' }),
-        P(400, 148, 560, 148, { kind: 'curve', style: 'metal' })
+        P(400, 148, 560, 148, { kind: 'curve', style: 'metal' }),
+        P(610, 148, 760, 148, { kind: 'curve', style: 'metal', phase2: true })
       ],
-      items: [I(140, 148, 'chakchak'), I(480, 118, 'chakchak'), I(820, 148, 'chakchak')],
+      items: [I(140, 148, 'chakchak'), I(480, 118, 'chakchak'), I(820, 148, 'chakchak'), I(680, 118, 'chakchak')],
       checkpoints: [],
       hazards: [],
       lamps: [[120, 230], [380, 168], [700, 168], [900, 180]],
@@ -209,7 +211,8 @@
     out.platforms = lv.platforms.map(function (p) {
       return {
         a: pair(p.a), b: pair(p.b), ca: pair(p.ca), cb: pair(p.cb),
-        kind: p.kind, style: p.style
+        kind: p.kind, style: p.style, phase2: p.phase2,
+        drift: p.drift ? { speed: p.drift.speed, amp: p.drift.amp * K, phase: p.drift.phase } : undefined
       };
     });
     out.items = lv.items.map(function (it) {

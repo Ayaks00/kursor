@@ -83,7 +83,7 @@
   UI.prototype.buildLevelButtons = function () {
     var self = this;
     var items = this.game.levelItems();
-    var signature = items.map(function (it) { return it.id + (it.locked ? 'x' : 'o'); }).join('|');
+    var signature = items.map(function (it) { return it.id + (it.locked ? 'x' : 'o') + it.label; }).join('|');
     if (signature === this.levelSignature) return;
     this.levelSignature = signature;
     this.levelList.innerHTML = '';

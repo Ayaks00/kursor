@@ -39,6 +39,7 @@
     this.target = 0;
     this.warp = 0;
     this.warpMax = 0.5;
+    this.lastSwitchAt = 0;
     this.switches = 0;
     this.camX = 0;
     this.camY = 0;
@@ -61,7 +62,7 @@
   Game.prototype.loadSave = function () {
     var raw = localStorage.getItem(SAVE_KEY);
     if (raw) return JSON.parse(raw);
-    return { unlocked: 0, best: {} };
+    return { unlocked: 0, best: {}, chak: {} };
   };
 
   Game.prototype.writeSave = function () {
@@ -73,7 +74,10 @@
     this.stateTime = 0;
     if (s === 'menu') this.menuIndex = 0;
     if (s === 'menu' || s === 'levels') this.audio.setTheme('menu');
-    if (s === 'play') this.audio.setTheme(this.level.boss ? 'boss' : 'game');
+    if (s === 'play') {
+      var themes = ['bauman', 'kfu', 'observatory', 'dvoika'];
+      this.audio.setTheme(this.level.boss ? 'boss' : (themes[this.levelIndex] || 'game'));
+    }
     if (s === 'victory') this.audio.setTheme('victory');
   };
 
@@ -89,6 +93,7 @@
     this.target = 0;
     this.warp = 0.35;
     this.warpMax = 0.5;
+    this.lastSwitchAt = 0;
     this.switches = 0;
     this.hintTime = lv.id === 1 ? 14 : 0;
     this.hintDismissed = false;
@@ -210,16 +215,20 @@
 
   Game.prototype.platformEnds = function (plat) {
     var t = this.curvature;
+    var drift = plat.drift ? Math.sin(this.time * plat.drift.speed + plat.drift.phase) * plat.drift.amp : 0;
     return [
-      [lerp(plat.a[0], plat.ca[0], t), lerp(plat.a[1], plat.ca[1], t)],
-      [lerp(plat.b[0], plat.cb[0], t), lerp(plat.b[1], plat.cb[1], t)]
+      [lerp(plat.a[0], plat.ca[0], t) + drift, lerp(plat.a[1], plat.ca[1], t)],
+      [lerp(plat.b[0], plat.cb[0], t) + drift, lerp(plat.b[1], plat.cb[1], t)]
     ];
   };
 
   Game.prototype.platformSolid = function (plat) {
+    if (plat.phase2 && (!this.boss || this.boss.hp > 2)) return false;
+    if (plat.kind === 'pulse') return this.time - this.lastSwitchAt < 1.8;
     return plat.kind === 'both' ||
       (plat.kind === 'flat' && this.curvature < 0.5) ||
-      (plat.kind === 'curve' && this.curvature >= 0.5);
+      (plat.kind === 'curve' && this.curvature >= 0.5) ||
+      (plat.kind === 'resonance' && this.curvature >= 0.5);
   };
 
   Game.prototype.surfaceY = function (ends, x) {
@@ -320,7 +329,7 @@
 
   Game.prototype.menuAction = function (id) {
     if (id === 'new') {
-      this.save.unlocked = 0; this.save.best = {}; this.writeSave();
+      this.save.unlocked = 0; this.save.best = {}; this.save.chak = {}; this.writeSave();
       this.loadLevel(0);
     } else if (id === 'continue') {
       this.loadLevel(clamp(this.save.unlocked, 0, KZ.LEVELS.length - 1));
@@ -334,7 +343,13 @@
     var list = [];
     for (var i = 0; i < KZ.LEVELS.length; i++) {
       var locked = i > this.save.unlocked;
-      list.push({ id: 'level:' + i, label: (i + 1) + '. ' + KZ.LEVELS[i].name + (locked ? ' — ЗАКРЫТ' : ''), locked: locked });
+      var lv = KZ.LEVELS[i];
+      var best = this.save.best[lv.id];
+      var chak = this.save.chak[lv.id];
+      var info = locked ? ' — ЗАКРЫТ' :
+        ((best !== undefined ? ' · ' + best + ' с' : '') +
+         (chak !== undefined ? ' · чак-чак ' + chak + '/' + lv.items.length : ''));
+      list.push({ id: 'level:' + i, label: (i + 1) + '. ' + lv.name + info, locked: locked });
     }
     list.push({ id: 'back', label: 'НАЗАД' });
     return list;
@@ -374,6 +389,7 @@
     } else {
       this.save.unlocked = Math.max(this.save.unlocked, next);
       this.save.best[this.level.id] = Math.round(this.timeInLevel * 10) / 10;
+      this.save.chak[this.level.id] = this.items.filter(function (it) { return it.taken; }).length;
       this.writeSave();
       this.loadLevel(next);
     }
@@ -399,6 +415,7 @@
       this.target = this.target ? 0 : 1;
       this.warp = 0.72;
       this.warpMax = 0.72;
+      this.lastSwitchAt = this.time;
       this.switches++;
       this.audio.play('toggle', 0.5);
       var px = this.player.x + 5 * K, py = this.player.y + 6 * K;
@@ -498,6 +515,8 @@
       p.coyote = 5;
       if (!wasGround && impact > 1.7 * K) {
         this.audio.play('land', Math.min(0.5, 0.2 + impact / K * 0.05));
+        var style = lv.platforms[bestIdx].style;
+        this.audio.stepSound(style === 'metal' ? 'metal' : style === 'wood' ? 'wood' : 'stone');
         this.burst(p.x + 5 * K, bestY, '#c8b998', impact > 4 * K ? 8 : 4, { speed: 1, size: 1, gravity: 0.08 });
         this.ring(p.x + 5 * K, bestY, '#e9dfc4', 11, 0.25);
         if (impact > 4 * K) this.shake(0.5, 0.12);
@@ -538,6 +557,7 @@
     var hx, hy, hw = 0, hh = 0;
     for (var h = 0; h < this.hazards.length; h++) {
       var hz = this.hazards[h];
+      if (hz.plane !== undefined && hz.plane !== (this.curvature >= 0.5 ? 1 : 0)) continue;
       if (hz.type === 'spikes') { hx = hz.x; hy = hz.y; hw = hz.w; hh = 7 * K; }
       else {
         var ph = this.time * hz.speed;
@@ -578,7 +598,7 @@
 
     b.fireTimer -= dt;
     if (b.fireTimer <= 0) {
-      var shots = b.hp === 3 ? 1 : 2;
+      var shots = b.hp === 3 ? 1 : b.hp === 2 ? 2 : 3;
       for (var s = 0; s < shots; s++) {
         var ang = Math.atan2(p.y - b.y, p.x - b.x) + (s - (shots - 1) / 2) * 0.28;
         var sp = (2.1 + (3 - b.hp) * 0.3) * K;
@@ -673,6 +693,8 @@
       }
     } else {
       this.drawWorld(s);
+      A.foreground(s, this.level, this.camX, this.camY, this.time);
+      A.weather(s, this.level, this.time);
     }
     s.restore();
 
@@ -712,6 +734,12 @@
       c.restore();
     }
     
+    if (this.state !== 'menu' && this.state !== 'levels' && this.state !== 'how') {
+      var tints = ['rgba(214,145,70,0.045)', 'rgba(118,142,190,0.05)', 'rgba(96,138,190,0.055)', 'rgba(190,150,108,0.045)', 'rgba(198,86,52,0.055)'];
+      c.fillStyle = tints[this.levelIndex % tints.length];
+      c.fillRect(0, 0, W, H);
+    }
+
     if (this.flashTime > 0 && this.flashAlpha > 0) {
       c.globalAlpha = this.flashAlpha * Math.min(1, this.flashTime / Math.max(0.01, this.flashMax));
       c.fillStyle = this.flashColor;
@@ -740,8 +768,10 @@
           Math.max(ends[0][1], ends[1][1]) < this.camY - 20 ||
           Math.min(ends[0][1], ends[1][1]) > this.camY + H + 20 * K) continue;
       var alpha = plat.kind === 'both' ? 1 :
-        (plat.kind === 'curve' ? 0.18 + this.curvature * 0.82 : 1.0 - this.curvature * 0.82);
-      A.platform(ctx, ends[0], ends[1], plat.style, alpha, this.time);
+        (plat.kind === 'pulse' || plat.kind === 'resonance' ? (this.time - this.lastSwitchAt < 1.8 ? 1 : 0.16) :
+        (plat.phase2 && (!this.boss || this.boss.hp > 2) ? 0.14 :
+        (plat.kind === 'curve' ? 0.18 + this.curvature * 0.82 : 1.0 - this.curvature * 0.82)));
+      A.platform(ctx, ends[0], ends[1], plat.style, alpha, this.time, plat.kind);
     }
 
     if (lv.lamps) {
@@ -757,7 +787,9 @@
     for (var c = 0; c < this.checkpoints.length; c++) A.flag(ctx, this.checkpoints[c], this.time);
     for (var h = 0; h < this.hazards.length; h++) {
       var hz = this.hazards[h];
-      if (hz.type === 'spikes') A.spikes(ctx, hz); else A.orb(ctx, hz, this.time);
+      if (hz.type === 'spikes') A.spikes(ctx, hz);
+      else if (hz.plane !== undefined) A.guard(ctx, hz, this.time, hz.plane === (this.curvature >= 0.5 ? 1 : 0));
+      else A.orb(ctx, hz, this.time);
     }
     if (lv.goal) {
       var active = this.items.filter(function (it) { return it.taken; }).length >= 4;

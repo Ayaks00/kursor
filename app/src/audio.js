@@ -17,6 +17,34 @@
       wave: 'triangle',
       gain: 0.036
     },
+    bauman: {
+      bpm: 116,
+      lead: [0, 4, 7, 8, 7, 4, 2, 0],
+      bass: [0, 0, 5, 5, 7, 7, 4, 4],
+      wave: 'triangle',
+      gain: 0.038
+    },
+    kfu: {
+      bpm: 108,
+      lead: [0, 7, 8, 7, 4, 2, 4, 0],
+      bass: [0, 0, 8, 8, 5, 5, 7, 7],
+      wave: 'sine',
+      gain: 0.04
+    },
+    observatory: {
+      bpm: 96,
+      lead: [0, 2, 4, 7, 11, 7, 4, 2],
+      bass: [0, 0, 7, 7, 8, 8, 5, 5],
+      wave: 'sine',
+      gain: 0.042
+    },
+    dvoika: {
+      bpm: 132,
+      lead: [0, 4, 8, 7, 4, 0, 2, 7],
+      bass: [0, 0, 7, 7, 1, 1, 8, 8],
+      wave: 'triangle',
+      gain: 0.034
+    },
     boss: {
       bpm: 168,
       lead: [0, 1, 0, 4, 8, 7, 1, 0],
@@ -88,6 +116,26 @@
     this.theme = name;
     this.step = 0;
     if (this.ctx) this.nextNote = this.ctx.currentTime + 0.05;
+  };
+
+  AudioSystem.prototype.stepSound = function (material) {
+    if (!this.ctx || this.muted) return;
+    var t = this.ctx.currentTime;
+    var dur = material === 'metal' ? 0.09 : 0.06;
+    var filter = this.ctx.createBiquadFilter();
+    filter.type = 'bandpass';
+    filter.frequency.value = material === 'metal' ? 1450 : material === 'wood' ? 640 : 360;
+    filter.Q.value = 1.6;
+    var len = Math.floor(this.ctx.sampleRate * dur);
+    var buf = this.ctx.createBuffer(1, len, this.ctx.sampleRate);
+    var data = buf.getChannelData(0);
+    for (var i = 0; i < len; i++) data[i] = (Math.random() * 2 - 1) * (1 - i / len);
+    var src = this.ctx.createBufferSource();
+    src.buffer = buf;
+    var g = this.ctx.createGain();
+    g.gain.value = material === 'metal' ? 0.06 : 0.05;
+    src.connect(filter); filter.connect(g); g.connect(this.musicBus);
+    src.start(t);
   };
 
   AudioSystem.prototype.toggleMute = function () {

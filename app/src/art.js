@@ -385,7 +385,7 @@
     ctx.restore();
   };
 
-  A.platform = function (ctx, a, b, style, alpha, phase) {
+  A.platform = function (ctx, a, b, style, alpha, phase, kind) {
     ctx.save();
     ctx.globalAlpha = alpha;
     A.at(ctx, a[0], a[1], function (ctx) {
@@ -458,6 +458,18 @@
         if (len > 18) A.ornament(ctx, 2, 1.8, Math.min(len - 4, 48), C.goldLight, phase);
       }
 
+      for (var mk = 7; mk < len - 3; mk += 17) {
+        if (kind === 'flat') {
+          A.fineRect(ctx, mk, -0.5, 0.8, 0.8, C.goldLight);
+          A.fineRect(ctx, mk + 0.2, -0.3, 0.35, 0.35, '#8c6a3a');
+        } else if (kind === 'curve' || kind === 'pulse' || kind === 'resonance') {
+          ctx.strokeStyle = kind === 'pulse' ? '#8ee9f2' : C.goldLight;
+          ctx.lineWidth = 0.3;
+          ctx.beginPath();
+          ctx.moveTo(mk, -0.4); ctx.lineTo(mk + 1.2, 0.6); ctx.lineTo(mk + 2.4, -0.4);
+          ctx.stroke();
+        }
+      }
       if (len > 26) {
         for (var br = 12; br < len - 10; br += 30) {
           ctx.fillStyle = style === 'stone' ? '#6f6350' : style === 'metal' ? '#5c4a30' : '#4a3320';
@@ -475,6 +487,26 @@
       ctx.restore();
     });
     ctx.restore();
+  };
+
+  A.guard = function (ctx, h, time, active) {
+    A.at(ctx, h.x, h.y, function (ctx) {
+      var r = (h.r || 7 * A.U) / A.U;
+      ctx.globalAlpha = active ? 1 : 0.3;
+      A.halo(ctx, 0, 0, r + 3, active ? '#d97846' : '#8ee9f2', 0.4);
+      ctx.fillStyle = active ? '#6d3f28' : '#2f4a52';
+      ctx.beginPath();
+      ctx.moveTo(0, -r); ctx.lineTo(r, 0); ctx.lineTo(0, r); ctx.lineTo(-r, 0);
+      ctx.closePath(); ctx.fill();
+      ctx.strokeStyle = C.gold; ctx.lineWidth = 0.5; ctx.stroke();
+      A.rect(ctx, -2, -1, 4, 2, active ? C.goldLight : '#8ee9f2');
+      A.fineRect(ctx, -0.25, -r + 1, 0.5, r * 2 - 2, 'rgba(255,236,184,0.5)');
+      for (var k = 0; k < 4; k++) {
+        var a = time * 1.6 + k * Math.PI / 2;
+        A.fineRect(ctx, Math.cos(a) * (r + 2), Math.sin(a) * (r + 2), 0.5, 0.5, C.goldLight);
+      }
+      ctx.globalAlpha = 1;
+    });
   };
 
   A.player = function (ctx, p, time, curved) {
@@ -524,6 +556,8 @@
       A.fineRect(ctx, x + 7.25, y - 2.75, 0.5, 0.5, '#c7d68d');
       A.fineRect(ctx, x + 8.75, y + 6.75, 0.25, 2.5, '#8a5a3c');
       A.fineRect(ctx, x + 9.5, y + 8.25, 0.25, 0.25, C.goldLight);
+      A.fineRect(ctx, x - 1.75 + Math.sin(time * 9) * 0.6, y + 3.5, 0.25, 0.25, '#fff0c8');
+      A.fineRect(ctx, x + 1.25 + Math.sin(time * 11) * 0.5, y + 4.5, 0.25, 0.25, '#d9b15c');
     });
   };
 
@@ -768,6 +802,42 @@
       A.halo(ctx, gx, gy - 5, 14 + flicker, '#ffce6a', 0.5);
       A.halo(ctx, gx, gy - 5, 7 + flicker * 0.5, '#fff3c8', 0.35);
     });
+  };
+
+  A.foreground = function (ctx, level, camX, camY, time) {
+    ctx.save();
+    var u = A.U;
+    var shift = ((camX * 0.32 + camY * 0.12) % (56 * u) + 56 * u) % (56 * u);
+    ctx.globalAlpha = 0.12;
+    ctx.fillStyle = level.id % 2 ? '#f1e2bd' : '#d4b87a';
+    for (var side = -1; side <= 1; side += 2) {
+      var bx = side < 0 ? -6 * u : 470 * u;
+      for (var c = 0; c < 5; c++) {
+        var cx = bx + side * c * 13 * u + side * shift * 0.15;
+        ctx.fillRect(cx, 0, 3 * u, 270 * u);
+        ctx.fillRect(cx - 1.5 * u, 8 * u, 6 * u, 2 * u);
+        ctx.fillRect(cx - 1.5 * u, 232 * u, 6 * u, 2 * u);
+      }
+    }
+    ctx.globalAlpha = 0.1;
+    A.ornament(ctx, -shift, 260 * u, 540 * u, C.goldLight, 0);
+    ctx.restore();
+  };
+
+  A.weather = function (ctx, level, time) {
+    ctx.save();
+    var u = A.U;
+    var colors = ['#d9a55c', '#f5e3ab', '#c7d68d', '#e9dfc4', '#ffce6a'];
+    var col = colors[(level.id - 1) % colors.length];
+    for (var i = 0; i < 34; i++) {
+      var speed = 0.4 + (i % 5) * 0.16;
+      var x = ((i * 137 + time * speed * 42) % 500) * u;
+      var y = ((i * 83 + time * (9 + i % 7) * 1.6) % 280) * u;
+      ctx.globalAlpha = 0.12 + 0.12 * Math.sin(time * 2 + i);
+      ctx.fillStyle = i % 4 ? col : '#8ee9f2';
+      ctx.fillRect(x, y, (i % 3 ? 0.5 : 0.8) * u, (i % 4 ? 0.5 : 0.35) * u);
+    }
+    ctx.restore();
   };
 
   A.convergenceGuides = function (ctx, level, strength, phase) {

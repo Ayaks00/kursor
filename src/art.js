@@ -21,8 +21,10 @@
 
   // Заголовки — античный засечный шрифт, мелкий HUD — моноширинный для читаемости.
   A.font = function (size, bold, mono) {
-    var family = (mono || size < 9) ? '"DejaVu Sans Mono", "Courier New", monospace'
-      : '"DejaVu Serif", Georgia, serif';
+    // Tahoma/Georgia есть на Windows, Chrome и Яндекс Браузере; DejaVu — запасной вариант на Linux.
+    var family = (mono || size < 10)
+      ? 'Tahoma, "Segoe UI", "DejaVu Sans", Arial, sans-serif'
+      : 'Georgia, "Times New Roman", "DejaVu Serif", serif';
     return (bold ? 'bold ' : '') + size + 'px ' + family;
   };
 
@@ -132,7 +134,7 @@
       for (var s = 0; s < 66; s += 11) A.rect(ctx, bx + s, 126, 6, 10, C.terracotta);
       A.rect(ctx, bx + 2, 137, 62, 3, C.goldDark);
       A.rect(ctx, bx + 5, 141, 56, 13, '#3a291e');
-      A.text(ctx, i % 2 ? 'ЧАК-ЧАК' : 'АМФОРЫ', bx + 7, 143, { size: 6, color: C.goldLight, mono: true, shadow: false });
+      A.text(ctx, i % 2 ? 'ЧАК-ЧАК' : 'АМФОРЫ', bx + 7, 143, { size: 8, color: C.goldLight, mono: true, shadow: false });
       A.column(ctx, bx + 6, 156, 52, C.marbleDim);
       A.column(ctx, bx + 56, 156, 52, C.marbleDim);
       // амфора у входа
@@ -178,7 +180,7 @@
     ctx.strokeStyle = C.gold; ctx.lineWidth = 1;
     ctx.beginPath(); ctx.moveTo(30, 162); ctx.lineTo(86, 156); ctx.moveTo(30, 176); ctx.lineTo(86, 170); ctx.stroke();
     A.rect(ctx, 56, 160, 2, 2, C.goldLight);
-    A.text(ctx, 'a // b ?', 29, 181, { size: 6, color: C.goldLight, mono: true, shadow: false });
+    A.text(ctx, 'a // b ?', 29, 181, { size: 8, color: C.goldLight, mono: true, shadow: false });
     A.rect(ctx, 0, 218, 480, 52, pal.ground || '#4c4030');
     A.ornament(ctx, 0, 221, 480, C.goldDark, 0);
   };
@@ -434,7 +436,7 @@
       A.rect(ctx, x + Math.cos(a) * (r + 8), y + Math.sin(a) * (r + 8), 2, 2, C.goldLight);
     }
     A.rect(ctx, x - 1, y - 1, 3, 3, C.goldLight);
-    A.text(ctx, 'идеальная точка', x + 10, y - 5, { size: 6, color: C.goldLight, shadow: false });
+    A.text(ctx, 'идеальная точка', x + 10, y - 5, { size: 8, color: C.goldLight, shadow: false });
   };
 
   A.convergenceGuides = function (ctx, level, strength, phase) {

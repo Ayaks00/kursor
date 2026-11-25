@@ -485,8 +485,8 @@
     if (this.toastTime > 0) {
       var alpha = Math.min(1, this.toastTime * 2);
       c.globalAlpha = alpha;
-      A.panel(c, 156, 34, 168, 18, '#2a2219', '#e3c57d');
-      A.text(c, this.toast || '', 240, 40, { size: 7, color: '#f5e7bb', align: 'center', shadow: false });
+      A.panel(c, 140, 30, 200, 22, '#2a2219', '#e3c57d');
+      A.text(c, this.toast || '', 240, 36, { size: 9, color: '#f5e7bb', align: 'center', shadow: false });
       c.globalAlpha = 1;
     }
 
@@ -562,121 +562,115 @@
 
   Game.prototype.drawMenu = function (c) {
     this.menuRects = [];
-    A.text(c, 'ЛОБАЧЕВСКИЙ', 240, 24, { size: 20, bold: true, color: '#f3e6bc', align: 'center' });
-    A.text(c, 'КРИВАЯ  КАЗАНЬ', 240, 50, { size: 11, color: '#e3c57d', align: 'center' });
-    A.rect(c, 90, 68, 300, 1, '#c8a45c');
-    A.text(c, 'Параллельные прямые встречаются — начни игру', 240, 76, { size: 7, color: '#ded1ae', align: 'center' });
+    A.text(c, 'ЛОБАЧЕВСКИЙ', 240, 20, { size: 22, bold: true, color: '#f3e6bc', align: 'center' });
+    A.text(c, 'КРИВАЯ КАЗАНЬ', 240, 48, { size: 12, color: '#e3c57d', align: 'center' });
+    A.rect(c, 90, 66, 300, 1, '#c8a45c');
+    A.text(c, 'Параллельные прямые встречаются — начни игру', 240, 74, { size: 9, color: '#ded1ae', align: 'center' });
 
     var items = this.menuItems();
-    var y0 = 102;
+    var y0 = 96;
     for (var i = 0; i < items.length; i++) {
-      var x = 158, y = y0 + i * 21;
-      A.panel(c, x, y, 164, 17, i === this.menuIndex ? '#5a4a31' : '#2c2419',
-        i === this.menuIndex ? '#e3c57d' : '#6a5c48');
-      A.text(c, items[i].label, x + 82, y + 5, { size: 8, color: i === this.menuIndex ? '#fff4d0' : '#ded1ae', align: 'center', shadow: false });
-      this.menuRects.push({ x: x, y: y, w: 164, h: 17, id: items[i].id });
+      var x = 146, y = y0 + i * 24;
+      A.panel(c, x, y, 188, 20, i === this.menuIndex ? '#5a4a31' : '#2c2419',
+        i === this.menuIndex ? '#e3c57d' : '#96703a');
+      A.text(c, items[i].label, x + 94, y + 5, { size: 10, color: i === this.menuIndex ? '#fff4d0' : '#ded1ae', align: 'center', shadow: false });
+      this.menuRects.push({ x: x, y: y, w: 188, h: 20, id: items[i].id });
     }
-    A.text(c, 'WASD / СТРЕЛКИ — ДВИЖЕНИЕ    ПРОБЕЛ — ПРЫЖОК', 240, 232, { size: 6, color: '#c3b492', align: 'center' });
-    A.text(c, 'Q / SHIFT — КРИВИЗНА    ESC — ПАУЗА    M — ЗВУК', 240, 244, { size: 6, color: '#c3b492', align: 'center' });
-    A.text(c, 'ПИКСЕЛЬНЫЙ ПЛАТФОРМЕР · КОМАНДА ИБ', 240, 258, { size: 6, color: '#8c8069', align: 'center' });
+    A.text(c, 'WASD / СТРЕЛКИ — ДВИЖЕНИЕ    ПРОБЕЛ — ПРЫЖОК', 240, 226, { size: 8, color: '#c3b492', align: 'center' });
+    A.text(c, 'Q / SHIFT — КРИВИЗНА    ESC — ПАУЗА    M — ЗВУК', 240, 240, { size: 8, color: '#c3b492', align: 'center' });
+    A.text(c, 'ПИКСЕЛЬНЫЙ ПЛАТФОРМЕР · КОМАНДА ИБ', 240, 254, { size: 8, color: '#a89a7d', align: 'center' });
   };
 
   Game.prototype.drawHow = function (c) {
-    A.panel(c, 34, 20, 412, 232, '#241d16', '#c8a45c');
-    A.text(c, 'КАК ИГРАТЬ', 240, 32, { size: 13, bold: true, color: '#f3e6bc', align: 'center' });
-    A.rect(c, 50, 50, 380, 1, '#6a5c48');
+    A.panel(c, 34, 16, 412, 236, '#241d16', '#c8a45c');
+    A.text(c, 'КАК ИГРАТЬ', 240, 28, { size: 15, bold: true, color: '#f3e6bc', align: 'center' });
+    A.rect(c, 50, 50, 380, 1, '#96703a');
     var lines = [
       ['← →  или  A D', 'движение'],
-      ['ПРОБЕЛ / W / ↑', 'прыжок (выше при удержании)'],
-      ['Q  или  SHIFT', 'переключить геометрию: плоскость ⇄ Лобачевский'],
-      ['ESC / P', 'пауза, перезапуск уровня, выход'],
-      ['R', 'быстрый перезапуск уровня'],
-      ['M', 'включить / выключить звук'],
-      ['ENTER', 'начать уровень / продолжить']
+      ['ПРОБЕЛ / W / ↑', 'прыжок, выше при удержании'],
+      ['Q  или  SHIFT', 'переключить геометрию'],
+      ['ESC / P', 'пауза, рестарт, выход'],
+      ['R', 'перезапуск уровня'],
+      ['M', 'звук вкл / выкл'],
+      ['ENTER', 'старт и продолжение']
     ];
     for (var i = 0; i < lines.length; i++) {
-      A.text(c, lines[i][0], 54, 60 + i * 17, { size: 7, color: '#e3c57d', shadow: false });
-      A.text(c, lines[i][1], 196, 60 + i * 17, { size: 7, color: '#e8ddbf', shadow: false });
+      A.text(c, lines[i][0], 54, 60 + i * 19, { size: 9, color: '#e3c57d', shadow: false });
+      A.text(c, lines[i][1], 190, 60 + i * 19, { size: 9, color: '#e8ddbf', shadow: false });
     }
-    A.rect(c, 50, 184, 380, 1, '#6a5c48');
-    var body = 'ФИШКА: в кривом мире параллельные навесы сходятся в «идеальной точке» и становятся платформами. ' +
-      'Прыгай, нажимай Q в воздухе и ищи чак-чак.';
-    this.wrapText(c, body, 54, 192, 372, 11, { size: 7, color: '#e8ddbf', shadow: false });
-    A.text(c, 'ENTER / КЛИК — вернуться в меню', 240, 240, { size: 7, color: '#c8a45c', align: 'center', shadow: false });
+    A.rect(c, 50, 190, 380, 1, '#96703a');
+    this.wrapText(c, 'В кривом мире параллельные навесы сходятся в идеальной точке и становятся платформами. Прыгай, жми Q в воздухе и собирай чак-чак.',
+      54, 198, 372, 13, { size: 9, color: '#e8ddbf', shadow: false });
+    A.text(c, 'ENTER / КЛИК — вернуться в меню', 240, 242, { size: 9, color: '#c8a45c', align: 'center', shadow: false });
   };
 
   Game.prototype.drawAbout = function (c) {
-    A.panel(c, 28, 14, 424, 248, '#241d16', '#c8a45c');
-    A.text(c, 'ОБ ИГРЕ', 240, 22, { size: 13, bold: true, color: '#f3e6bc', align: 'center' });
-    A.text(c, 'КОМАНДА: команда ИБ', 40, 42, { size: 8, color: '#e3c57d', shadow: false });
+    A.panel(c, 28, 12, 424, 250, '#241d16', '#c8a45c');
+    A.text(c, 'ОБ ИГРЕ', 240, 20, { size: 15, bold: true, color: '#f3e6bc', align: 'center' });
+    A.text(c, 'КОМАНДА: команда ИБ', 40, 40, { size: 10, color: '#e3c57d', shadow: false });
     var rows = [
-      'ИДЕЯ: платформер о неевклидовой геометрии Лобачевского в Казани.',
-      'СТИЛЬ: античная стилизация — мрамор, бронза, амфоры, лавр, меандр.',
-      'НАУКА: Н. И. Лобачевский, ректор Казанского университета (1827–1846);',
-      'доклад о новой геометрии — 1826 г. Источники: kpfu.ru, dm.kpfu.ru.',
-      'КАЗАНЬ: улица Баумана, главное здание КФУ, обсерватория Энгельгардта,',
-      'Казанский Кремль, башня Сююмбике, Зилант, татарский орнамент, чак-чак.',
-      'ИСТОЧНИКИ ФАКТОВ: https://kpfu.ru/math/history/znamenitye-personalii/',
-      'https://dm.kpfu.ru/ · https://astro.kpfu.ru/architecture · https://unesco.ru/en/unescorussia/sites/s980/',
-      'АССЕТЫ: CC0-звуки Kenney (CREDITS.md); остальная графика и музыка —',
-      'собственная процедурная генерация во время разработки.',
-      'ИИ-ИНСТРУМЕНТЫ: Arena.ai Agent — код, тексты и пиксельная графика,',
-      'процедурная музыка и звуковые эффекты написаны вручную.',
-      'ВЕРСИЯ: веб, 480×270 px, 3 уровня + босс.'
+      'ИДЕЯ: неевклидова геометрия в Казани.',
+      'СТИЛЬ: античная стилизация — мрамор, бронза, лавр.',
+      'НАУКА: Н. И. Лобачевский, 1826, ректор КФУ 1827–1846.',
+      'ИСТОЧНИКИ: kpfu.ru · dm.kpfu.ru · astro.kpfu.ru',
+      'КАЗАНЬ: Баумана, КФУ, обсерватория, Кремль, Зилант.',
+      'АССЕТЫ: CC0-звуки Kenney; графика и музыка свои.',
+      'ИИ: Arena.ai Agent — код, тексты, графика, тесты.',
+      'ВЕРСИЯ: веб, 3 уровня + босс.'
     ];
     for (var i = 0; i < rows.length; i++) {
-      A.text(c, rows[i], 40, 58 + i * 15, { size: 6, color: i % 3 === 1 ? '#cfc2a0' : '#e8ddbf', shadow: false });
+      A.text(c, rows[i], 40, 60 + i * 17, { size: 9, color: i % 2 ? '#e8ddbf' : '#ded1ae', shadow: false });
     }
-    A.text(c, 'ENTER / КЛИК — меню', 240, 250, { size: 7, color: '#c8a45c', align: 'center', shadow: false });
+    A.text(c, 'ENTER / КЛИК — меню', 240, 244, { size: 9, color: '#c8a45c', align: 'center', shadow: false });
   };
 
   Game.prototype.drawExit = function (c) {
-    A.panel(c, 110, 82, 260, 104, '#241d16', '#c8a45c');
-    A.text(c, 'ВЫХОД', 240, 100, { size: 15, bold: true, color: '#f3e6bc', align: 'center' });
-    A.text(c, 'Спасибо за игру!', 240, 128, { size: 9, color: '#e8ddbf', align: 'center', shadow: false });
-    A.text(c, 'Можно закрыть вкладку.', 240, 144, { size: 7, color: '#c3b492', align: 'center', shadow: false });
-    A.text(c, 'ENTER — вернуться в меню', 240, 166, { size: 7, color: '#e3c57d', align: 'center', shadow: false });
+    A.panel(c, 106, 78, 268, 110, '#241d16', '#c8a45c');
+    A.text(c, 'ВЫХОД', 240, 96, { size: 18, bold: true, color: '#f3e6bc', align: 'center' });
+    A.text(c, 'Спасибо за игру!', 240, 126, { size: 11, color: '#e8ddbf', align: 'center', shadow: false });
+    A.text(c, 'Можно закрыть вкладку.', 240, 146, { size: 9, color: '#c3b492', align: 'center', shadow: false });
+    A.text(c, 'ENTER — вернуться в меню', 240, 168, { size: 9, color: '#e3c57d', align: 'center', shadow: false });
   };
 
   Game.prototype.drawIntro = function (c) {
     var lv = this.level;
-    A.panel(c, 28, 30, 424, 210, '#241d16', '#c8a45c');
-    A.text(c, 'УРОВЕНЬ ' + lv.id + ' · ' + lv.name, 42, 44, { size: 11, bold: true, color: '#f3e6bc' });
-    A.text(c, lv.subtitle, 42, 64, { size: 7, color: '#e3c57d', shadow: false });
-    A.rect(c, 42, 80, 396, 1, '#6a5c48');
-    var n = this.wrapText(c, lv.fact, 42, 92, 396, 13, { size: 7, color: '#e8ddbf', shadow: false });
-    this.wrapText(c, lv.task, 42, 100 + n * 13 + 8, 396, 13, { size: 7, color: '#f0d493', shadow: false });
-    A.text(c, 'ENTER / ПРОБЕЛ — старт', 240, 224, { size: 8, color: '#e3c57d', align: 'center' });
+    A.panel(c, 24, 26, 432, 218, '#241d16', '#c8a45c');
+    A.text(c, 'УРОВЕНЬ ' + lv.id + ' · ' + lv.name, 40, 40, { size: 13, bold: true, color: '#f3e6bc' });
+    A.text(c, lv.subtitle, 40, 64, { size: 9, color: '#e3c57d', shadow: false });
+    A.rect(c, 40, 80, 400, 1, '#96703a');
+    var n = this.wrapText(c, lv.fact, 40, 90, 400, 15, { size: 9, color: '#e8ddbf', shadow: false });
+    this.wrapText(c, lv.task, 40, 100 + n * 15 + 6, 400, 15, { size: 9, color: '#f0d493', shadow: false });
+    A.text(c, 'ENTER / ПРОБЕЛ — старт', 240, 226, { size: 10, color: '#e3c57d', align: 'center' });
   };
 
   Game.prototype.drawHUD = function (c) {
     var lv = this.level;
-    A.rect(c, 0, 0, W, 15, 'rgba(9,9,22,0.75)');
-    A.text(c, lv.id + '. ' + lv.name, 6, 4, { size: 7, color: '#f3e6bc', shadow: false });
-    var taken = this.items.filter(function (i) { return i.taken; }).length;
-    A.text(c, 'ЧАК-ЧАК ' + taken + '/' + this.items.length + '  СМЕРТИ ' + this.deaths, 474, 4, { size: 7, color: '#e8ddbf', align: 'right', shadow: false });
+    A.rect(c, 0, 0, W, 18, 'rgba(9,9,22,0.8)');
+    A.text(c, lv.id + '. ' + lv.name, 6, 5, { size: 9, color: '#f3e6bc', shadow: false });
+    var taken = 0;
+    for (var i = 0; i < this.items.length; i++) if (this.items[i].taken) taken++;
+    A.text(c, 'ЧАК-ЧАК ' + taken + '/' + this.items.length + '  СМЕРТИ ' + this.deaths, 474, 5, { size: 9, color: '#e8ddbf', align: 'right', shadow: false });
 
-    // индикатор кривизны
-    var bx = 8, by = 245;
-    A.rect(c, bx, by, 104, 18, 'rgba(9,9,22,0.75)');
-    A.text(c, this.target ? 'ЛОБАЧЕВСКИЙ' : 'ПЛОСКОСТЬ', bx + 5, by + 2, { size: 6, color: this.target ? '#e3c57d' : '#e6c47a', shadow: false });
-    A.rect(c, bx + 5, by + 11, 94, 4, '#4a3a28');
-    A.rect(c, bx + 5, by + 11, Math.round(94 * this.curvature), 4, '#e3c57d');
-    A.text(c, 'Q', bx + 93, by + 2, { size: 6, color: '#c8a45c', shadow: false });
+    var bx = 8, by = 238;
+    A.rect(c, bx, by, 120, 26, 'rgba(9,9,22,0.8)');
+    A.text(c, this.target ? 'ЛОБАЧЕВСКИЙ' : 'ПЛОСКОСТЬ', bx + 5, by + 2, { size: 9, color: this.target ? '#e3c57d' : '#e6c47a', shadow: false });
+    A.rect(c, bx + 5, by + 15, 110, 5, '#4a3a28');
+    A.rect(c, bx + 5, by + 15, Math.round(110 * this.curvature), 5, '#e3c57d');
+    A.text(c, 'Q', bx + 106, by + 2, { size: 9, color: '#c8a45c', shadow: false });
 
     if (this.boss && !this.boss.dead) {
-      A.text(c, 'ЗИЛАНТ', 240, 20, { size: 7, color: '#f3e6bc', align: 'center' });
-      A.rect(c, 168, 32, 144, 6, '#3a2033');
-      A.rect(c, 168, 32, 48 * this.boss.hp, 6, '#e06f4c');
-      A.text(c, 'УДАРЬ В КРИВОМ МИРЕ', 240, 41, { size: 6, color: '#e3c57d', align: 'center', shadow: false });
+      A.text(c, 'ЗИЛАНТ', 240, 22, { size: 9, color: '#f3e6bc', align: 'center' });
+      A.rect(c, 168, 36, 144, 7, '#3a2033');
+      A.rect(c, 168, 36, 48 * this.boss.hp, 7, '#e06f4c');
+      A.text(c, 'УДАРЬ В КРИВОМ МИРЕ', 240, 47, { size: 9, color: '#e3c57d', align: 'center', shadow: false });
     }
 
     if (this.hintTime > 0) {
       var a = Math.min(1, this.hintTime / 2);
       c.globalAlpha = a;
-      A.panel(c, 96, 198, 288, 34, 'rgba(14,14,32,0.9)', '#c8a45c');
-      A.text(c, '← → — идти   ПРОБЕЛ — прыжок   Q — кривизна', 240, 204, { size: 7, color: '#f3e6bc', align: 'center', shadow: false });
-      this.wrapText(c, lv.task, 240, 216, 270, 9, { size: 6, color: '#ded1ae', align: 'center', shadow: false });
+      A.panel(c, 72, 188, 336, 46, 'rgba(14,14,32,0.92)', '#c8a45c');
+      A.text(c, '← → — идти   ПРОБЕЛ — прыжок   Q — кривизна', 240, 194, { size: 9, color: '#f3e6bc', align: 'center', shadow: false });
+      this.wrapText(c, lv.task, 240, 209, 320, 12, { size: 9, color: '#ded1ae', align: 'center', shadow: false });
       c.globalAlpha = 1;
     }
   };
@@ -688,49 +682,48 @@
 
   Game.prototype.drawPause = function (c) {
     this.dim(c, 0.7);
-    A.panel(c, 150, 52, 180, 164, '#241d16', '#c8a45c');
-    A.text(c, 'ПАУЗА', 240, 64, { size: 14, bold: true, color: '#f3e6bc', align: 'center' });
+    A.panel(c, 140, 46, 200, 180, '#241d16', '#c8a45c');
+    A.text(c, 'ПАУЗА', 240, 60, { size: 16, bold: true, color: '#f3e6bc', align: 'center' });
     var items = ['ПРОДОЛЖИТЬ', 'ПЕРЕЗАПУСК УРОВНЯ', 'ЗВУК ВКЛ/ВЫКЛ', 'В ГЛАВНОЕ МЕНЮ'];
     for (var i = 0; i < 4; i++) {
-      A.panel(c, 164, 90 + i * 28, 152, 21, this.menuIndex === i ? '#5a4a31' : '#2c2419',
-        this.menuIndex === i ? '#e3c57d' : '#6a5c48');
-      A.text(c, items[i], 240, 96 + i * 28, { size: 7, color: this.menuIndex === i ? '#fff4d0' : '#ded1ae', align: 'center', shadow: false });
+      var y = 88 + i * 30;
+      A.panel(c, 154, y, 172, 24, this.menuIndex === i ? '#5a4a31' : '#2c2419',
+        this.menuIndex === i ? '#e3c57d' : '#96703a');
+      A.text(c, items[i], 240, y + 6, { size: 10, color: this.menuIndex === i ? '#fff4d0' : '#ded1ae', align: 'center', shadow: false });
     }
   };
 
   Game.prototype.drawDeath = function (c) {
     this.dim(c, 0.6);
-    A.text(c, 'СИНГУЛЯРНОСТЬ!', 240, 110, { size: 17, bold: true, color: '#c45646', align: 'center' });
-    A.text(c, 'Возврат к чекпоинту...', 240, 140, { size: 8, color: '#e8ddbf', align: 'center', shadow: false });
-    if (this.stateTime > 0.6) A.text(c, 'ENTER — быстрее', 240, 156, { size: 7, color: '#e3c57d', align: 'center', shadow: false });
+    A.text(c, 'СИНГУЛЯРНОСТЬ!', 240, 104, { size: 20, bold: true, color: '#c45646', align: 'center' });
+    A.text(c, 'Возврат к чекпоинту...', 240, 136, { size: 10, color: '#e8ddbf', align: 'center', shadow: false });
+    if (this.stateTime > 0.6) A.text(c, 'ENTER — быстрее', 240, 156, { size: 9, color: '#e3c57d', align: 'center', shadow: false });
   };
 
   Game.prototype.drawComplete = function (c) {
     this.dim(c, 0.72);
-    A.panel(c, 120, 70, 240, 130, '#241d16', '#c8a45c');
-    A.text(c, 'УРОВЕНЬ ПРОЙДЕН', 240, 84, { size: 12, bold: true, color: '#f3e6bc', align: 'center' });
-    A.text(c, this.level.name, 240, 106, { size: 8, color: '#e3c57d', align: 'center', shadow: false });
-    A.text(c, 'ВРЕМЯ: ' + this.timeInLevel.toFixed(1) + ' с', 240, 130, { size: 7, color: '#e8ddbf', align: 'center', shadow: false });
-    A.text(c, 'ПЕРЕКЛЮЧЕНИЙ: ' + this.switches + '   СМЕРТЕЙ: ' + this.deaths, 240, 145, { size: 7, color: '#e8ddbf', align: 'center', shadow: false });
-    A.text(c, 'ENTER — дальше', 240, 174, { size: 8, color: '#e3c57d', align: 'center', shadow: false });
+    A.panel(c, 106, 62, 268, 146, '#241d16', '#c8a45c');
+    A.text(c, 'УРОВЕНЬ ПРОЙДЕН', 240, 76, { size: 14, bold: true, color: '#f3e6bc', align: 'center' });
+    A.text(c, this.level.name, 240, 102, { size: 10, color: '#e3c57d', align: 'center', shadow: false });
+    A.text(c, 'ВРЕМЯ: ' + this.timeInLevel.toFixed(1) + ' с', 240, 126, { size: 9, color: '#e8ddbf', align: 'center', shadow: false });
+    A.text(c, 'ПЕРЕКЛЮЧЕНИЙ: ' + this.switches + '   СМЕРТЕЙ: ' + this.deaths, 240, 144, { size: 9, color: '#e8ddbf', align: 'center', shadow: false });
+    A.text(c, 'ENTER — дальше', 240, 180, { size: 10, color: '#e3c57d', align: 'center', shadow: false });
   };
 
   Game.prototype.drawVictory = function (c) {
     A.backdrop(c, KZ.LEVELS[3], 0, this.time);
-    c.fillStyle = 'rgba(8,8,20,0.55)';
+    c.fillStyle = 'rgba(8,8,20,0.6)';
     c.fillRect(0, 0, W, H);
     var flyX = 60 + Math.min(1, this.stateTime / 6) * 380;
-    A.dragonSilhouette(c, flyX, 55 + Math.sin(this.time * 3) * 10, 1.4, '#8a5265');
-    A.text(c, 'ПОБЕДА!', 240, 40, { size: 22, bold: true, color: '#f3e6bc', align: 'center' });
-    A.text(c, 'Зилант отступает перед геометрией Лобачевского', 240, 70, { size: 8, color: '#e3c57d', align: 'center', shadow: false });
-    this.wrapText(c,
-      'Параллельные прямые пересеклись в идеальной точке — и Казань снова стала плоской... ' +
-      'настолько, насколько этого желает Евклид.',
-      240, 104, 440, 12, { size: 7, color: '#e8ddbf', align: 'center', shadow: false });
-    A.text(c, 'КОМАНДА ИБ · КАЗАНСКИЙ УНИВЕРСИТЕТ · 1826 → СЕГОДНЯ', 240, 172, { size: 7, color: '#c8a45c', align: 'center', shadow: false });
-    A.text(c, 'ИСТОЧНИКИ: kpfu.ru · dm.kpfu.ru · astro.kpfu.ru · unesco.ru', 240, 190, { size: 6, color: '#c3b492', align: 'center', shadow: false });
-    A.text(c, 'ПРОЙДЕНО УРОВНЕЙ: 4 · СМЕРТЕЙ: ' + this.deaths, 240, 216, { size: 7, color: '#e8ddbf', align: 'center', shadow: false });
-    if (this.stateTime > 1.5) A.text(c, 'ENTER — в главное меню', 240, 244, { size: 8, color: '#e3c57d', align: 'center', shadow: false });
+    A.dragonSilhouette(c, flyX, 62 + Math.sin(this.time * 3) * 10, 1.4, '#8a5265');
+    A.text(c, 'ПОБЕДА!', 240, 32, { size: 26, bold: true, color: '#f3e6bc', align: 'center' });
+    A.text(c, 'Зилант отступает перед геометрией Лобачевского', 240, 68, { size: 10, color: '#e3c57d', align: 'center', shadow: false });
+    this.wrapText(c, 'Параллельные прямые пересеклись в идеальной точке — и Казань снова стала плоской, насколько этого желает Евклид.',
+      240, 98, 440, 14, { size: 9, color: '#e8ddbf', align: 'center', shadow: false });
+    A.text(c, 'КОМАНДА ИБ · КАЗАНСКИЙ УНИВЕРСИТЕТ · 1826 → СЕГОДНЯ', 240, 166, { size: 9, color: '#c8a45c', align: 'center', shadow: false });
+    A.text(c, 'ИСТОЧНИКИ: kpfu.ru · dm.kpfu.ru · astro.kpfu.ru · unesco.ru', 240, 186, { size: 8, color: '#c3b492', align: 'center', shadow: false });
+    A.text(c, 'ПРОЙДЕНО УРОВНЕЙ: 4 · СМЕРТЕЙ: ' + this.deaths, 240, 210, { size: 9, color: '#e8ddbf', align: 'center', shadow: false });
+    if (this.stateTime > 1.5) A.text(c, 'ENTER — в главное меню', 240, 240, { size: 10, color: '#e3c57d', align: 'center', shadow: false });
   };
 
   KZ.Game = Game;

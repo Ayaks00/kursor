@@ -1,6 +1,3 @@
-/* Четыре статичных фона 1920x1080 — по одному на локацию Казани.
-   Античная стилизация: агора Баумана, портик КФУ, храм звёзд обсерватории,
-   древняя стена Кремля с башней Сююмбике. Генерирует PNG и src/bg-data.js. */
 const fs = require('fs'), path = require('path'), vm = require('vm');
 let createCanvas;
 try { ({ createCanvas } = require('@napi-rs/canvas')); }
@@ -35,7 +32,6 @@ function mosaicFloor(ctx, top, base, joint) {
   }
 }
 
-// 1. Улица Баумана — античная агора с лавками, амфорами и чак-чаком.
 function bauman(ctx) {
   sky(ctx, ['#d7bd97', '#cbb08a', '#bda17b', '#aa8d6c']);
   rect(ctx, 0, 128, W, 92, '#a3805f');
@@ -46,7 +42,6 @@ function bauman(ctx) {
     A.pediment(ctx, bx - 2, 138 - bh, 42, '#d8bd92');
     for (let c = 0; c < 3; c++) A.column(ctx, bx + 4 + c * 12, 152 - bh, bh - 14, '#e3d1ac');
   }
-  // Ряд лавок: полосатые козырьки, прилавки, амфоры, подносы с чак-чаком.
   for (let i = 0; i < 7; i++) {
     const bx = i * 74 - 12;
     rect(ctx, bx, 126, 70, 8, '#efe0bd');
@@ -77,7 +72,6 @@ function bauman(ctx) {
   }
 }
 
-// 2. Главное здание КФУ — мраморный портик, фронтон, лестница.
 function kfu(ctx) {
   sky(ctx, ['#d9c9a6', '#cdb892', '#bfa780', '#ae9873']);
   rect(ctx, 0, 168, W, 30, '#a8916e');
@@ -128,7 +122,6 @@ function kfu(ctx) {
   for (let x = 0; x < W; x += 48) rect(ctx, x, 258, 1, 12, '#82735a');
 }
 
-// 3. Обсерватория Энгельгардта — храм звёзд с куполом и астролябием.
 function observatory(ctx) {
   sky(ctx, ['#1d2743', '#26304d', '#2e3853', '#374056']);
   A.stars(ctx, 0, 0, 120, 6, 170);
@@ -162,7 +155,6 @@ function observatory(ctx) {
   ctx.beginPath(); ctx.arc(dx, 141, 17, 0, Math.PI * 2); ctx.stroke();
   ctx.beginPath(); ctx.arc(dx, 141, 11, 0, Math.PI * 2); ctx.stroke();
   rect(ctx, dx - 2, 139, 4, 4, C.goldLight);
-  // Медный меридиан и звездная карта на каменной плите.
   ctx.beginPath(); ctx.arc(dx - 74, 214, 22, 0.2, Math.PI * 1.5); ctx.stroke();
   rect(ctx, dx - 76, 212, 4, 4, C.goldLight);
   rect(ctx, 20, 150, 76, 44, '#4a4a3f');
@@ -176,7 +168,6 @@ function observatory(ctx) {
   A.ornament(ctx, 0, 234, W, C.goldDark, 0);
 }
 
-// 4. Казанский Кремль — стена, башня Сююмбике, знамёна и факелы.
 function kremlin(ctx) {
   sky(ctx, ['#2a2231', '#382838', '#46303b', '#4d363c']);
   A.stars(ctx, 0, 0, 44, 6, 100);

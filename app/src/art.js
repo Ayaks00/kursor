@@ -389,95 +389,90 @@
     ctx.save();
     ctx.globalAlpha = alpha;
     A.at(ctx, a[0], a[1], function (ctx) {
-      var x1 = 0, y1 = 0;
-      var x2 = (b[0] - a[0]) / A.U, y2 = (b[1] - a[1]) / A.U;
-      var dx = x2 - x1, dy = y2 - y1;
+      var dx = (b[0] - a[0]) / A.U;
+      var dy = (b[1] - a[1]) / A.U;
       var len = Math.sqrt(dx * dx + dy * dy) || 1;
-      var nx = -dy / len, ny = dx / len;
-      var thick = 7;
-      var base = style === 'wood' ? '#7b5433' : style === 'metal' ? '#6f532b' : '#7a6a51';
-      var top = style === 'wood' ? '#e0b477' : style === 'metal' ? '#f0d183' : '#f7efd8';
-      var dark = style === 'wood' ? '#3d2a1c' : style === 'metal' ? '#4a3920' : '#4d4032';
-      var edge = '#241a12';
-      function slab(offset, thickness) {
-        ctx.beginPath();
-        ctx.moveTo(x1 + nx * offset, y1 + ny * offset);
-        ctx.lineTo(x2 + nx * offset, y2 + ny * offset);
-        ctx.lineTo(x2 + nx * (offset + thickness), y2 + ny * (offset + thickness));
-        ctx.lineTo(x1 + nx * (offset + thickness), y1 + ny * (offset + thickness));
-        ctx.closePath();
+      ctx.save();
+      ctx.rotate(Math.atan2(dy, dx));
+
+      var thick = 8;
+      var base = style === 'wood' ? '#6f4a2d' : style === 'metal' ? '#705734' : '#8b7c62';
+      var top = style === 'wood' ? '#d9a96b' : style === 'metal' ? '#e9c981' : '#f3ead4';
+      var dark = style === 'wood' ? '#382718' : style === 'metal' ? '#40331f' : '#45392a';
+
+      ctx.fillStyle = 'rgba(16,11,7,0.55)';
+      ctx.fillRect(0.5, 2.4, len, thick + 2.2);
+
+      var grad = ctx.createLinearGradient(0, 0, 0, thick);
+      grad.addColorStop(0, top);
+      grad.addColorStop(0.22, base);
+      grad.addColorStop(1, dark);
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, len, thick);
+      ctx.strokeStyle = 'rgba(26,18,11,0.85)';
+      ctx.lineWidth = 0.5;
+      ctx.strokeRect(0, 0, len, thick);
+
+      ctx.fillStyle = top;
+      ctx.fillRect(-0.4, -1.6, len + 0.8, 2.4);
+      ctx.fillStyle = 'rgba(255,252,226,0.8)';
+      ctx.fillRect(0, -1.6, len, 0.35);
+      ctx.fillStyle = dark;
+      ctx.fillRect(0, thick - 1.4, len, 1.4);
+
+      if (style === 'stone') {
+        for (var st = 5; st < len - 2; st += 11) {
+          A.fineRect(ctx, st, 2.2, 0.3, thick - 3.2, 'rgba(35,27,18,0.62)');
+          A.fineRect(ctx, st + 0.4, 2.2, 0.2, thick - 3.2, 'rgba(255,248,220,0.35)');
+          A.fineRect(ctx, st + 1.5, 3.2 + (st % 3), 2.6, 0.25, 'rgba(255,246,214,0.5)');
+        }
+        for (var vn = 8; vn < len - 4; vn += 23) {
+          ctx.strokeStyle = 'rgba(120,105,82,0.55)';
+          ctx.lineWidth = 0.28;
+          ctx.beginPath();
+          ctx.moveTo(vn, 2);
+          ctx.lineTo(vn + 2.5, 3.4);
+          ctx.lineTo(vn + 5, 3);
+          ctx.stroke();
+        }
+        if (len > 22) A.ornament(ctx, 2, 3.2, Math.min(len - 4, 46), C.goldDark, phase);
+      } else if (style === 'wood') {
+        for (var pl = 4; pl < len - 2; pl += 9) {
+          A.fineRect(ctx, pl, 2, 0.3, thick - 3, 'rgba(42,27,16,0.65)');
+          A.fineRect(ctx, pl + 0.4, 2.4, 3.2, 0.25, 'rgba(255,220,160,0.32)');
+        }
+        for (var gr = 6; gr < len - 3; gr += 14) {
+          A.fineRect(ctx, gr, 5.2, 4.5, 0.25, 'rgba(38,24,14,0.5)');
+          A.fineRect(ctx, gr + 1, 6.4, 3, 0.25, 'rgba(255,214,150,0.28)');
+          A.fineRect(ctx, gr + 2.6, 3.6, 0.6, 0.6, 'rgba(38,24,14,0.6)');
+        }
+        if (len > 22) A.ornament(ctx, 2, 3.2, Math.min(len - 4, 40), '#b98a4c', phase);
+      } else {
+        for (var rv = 4; rv < len - 2; rv += 7) {
+          A.fineRect(ctx, rv, 2.2, 0.8, 0.8, '#fff2c4');
+          A.fineRect(ctx, rv + 0.2, 2.4, 0.35, 0.35, '#8c6a3a');
+          A.fineRect(ctx, rv + 3.5, thick - 3.2, 0.6, 0.6, '#9b7c4a');
+        }
+        A.fineRect(ctx, 0, 4.4, len, 0.3, 'rgba(255,230,160,0.5)');
+        A.fineRect(ctx, 0, 5.6, len, 0.25, 'rgba(30,22,12,0.5)');
+        if (len > 18) A.ornament(ctx, 2, 1.8, Math.min(len - 4, 48), C.goldLight, phase);
       }
-      
-      slab(1.5, thick + 2);
-      ctx.fillStyle = 'rgba(20,13,8,0.5)'; ctx.fill();
-      
-      slab(0, thick);
-      ctx.fillStyle = base; ctx.fill();
-      ctx.strokeStyle = edge; ctx.lineWidth = 0.7; ctx.stroke();
-      
-      slab(-0.6, 2.4);
-      ctx.fillStyle = top; ctx.fill();
-      ctx.strokeStyle = 'rgba(255,244,208,0.8)'; ctx.lineWidth = 0.4; ctx.stroke();
-      
-      slab(thick - 1.6, 1.6);
-      ctx.fillStyle = dark; ctx.fill();
-      
-      for (var d = 7; d < len; d += 11) {
-        var px = x1 + dx * (d / len) + nx * 3;
-        var py = y1 + dy * (d / len) + ny * 3;
-        if (style === 'wood') {
-          A.rect(ctx, px, py, 4, 0.4, '#6d4c33');
-          A.rect(ctx, px + 1, py + 2, 3, 0.3, '#a87a4b');
-        } else if (style === 'metal') {
-          A.rect(ctx, px, py, 1.2, 1.2, C.goldLight);
-          A.rect(ctx, px + 0.3, py + 0.3, 0.6, 0.6, C.bronzeDark);
-        } else {
-          A.rect(ctx, px, py, 0.6, 3, '#5a4b39');
-          A.rect(ctx, px + 2, py + 1, 3, 0.5, '#fff4d0');
+
+      if (len > 26) {
+        for (var br = 12; br < len - 10; br += 30) {
+          ctx.fillStyle = style === 'stone' ? '#6f6350' : style === 'metal' ? '#5c4a30' : '#4a3320';
+          ctx.beginPath();
+          ctx.moveTo(br, thick);
+          ctx.lineTo(br + 5, thick);
+          ctx.lineTo(br + 2.5, thick + 4.5);
+          ctx.closePath();
+          ctx.fill();
+          A.fineRect(ctx, br + 1.5, thick + 1, 0.25, 2.6, 'rgba(255,236,184,0.45)');
+          A.fineRect(ctx, br - 0.5, thick - 0.4, 6, 0.4, C.goldDark);
         }
       }
-      for (var sm = 6; sm < len - 2; sm += 18) {
-        var sx = x1 + dx * (sm / len);
-        var sy = y1 + dy * (sm / len);
-        if (style === 'stone') {
-          A.fineRect(ctx, sx + nx * 1.2, sy + ny * 1.2, 0.3, 4.6, 'rgba(40,30,20,0.6)');
-          A.fineRect(ctx, sx + nx * 4.8, sy + ny * 4.8, 3.2, 0.25, 'rgba(255,246,214,0.45)');
-        } else if (style === 'wood') {
-          A.fineRect(ctx, sx + nx * 1.4, sy + ny * 1.4, 0.35, 4.8, 'rgba(54,34,20,0.6)');
-          A.fineRect(ctx, sx + nx * 5, sy + ny * 5, 2, 0.25, 'rgba(255,220,160,0.35)');
-        } else {
-          A.fineRect(ctx, sx + nx * 2, sy + ny * 2, 0.6, 0.6, '#fff2c4');
-          A.fineRect(ctx, sx + nx * 5, sy + ny * 5, 0.6, 0.6, '#8c6a3a');
-        }
-      }
-      ctx.beginPath();
-      ctx.moveTo(x1 + nx * 0.2, y1 + ny * 0.2);
-      ctx.lineTo(x2 + nx * 0.2, y2 + ny * 0.2);
-      ctx.strokeStyle = 'rgba(255,252,226,0.55)';
-      ctx.lineWidth = 0.25;
-      ctx.stroke();
-      for (var sf = 3.5; sf < len; sf += 6.5) {
-        var fx = x1 + dx * (sf / len) + nx * 1.4;
-        var fy = y1 + dy * (sf / len) + ny * 1.4;
-        A.fineRect(ctx, fx, fy, 0.25, 0.25, style === 'metal' ? '#fff0b8' : '#fff6dd');
-        A.fineRect(ctx, fx + nx * 2.5, fy + ny * 2.5, 0.25, 0.25, 'rgba(20,14,9,0.7)');
-      }
-      ctx.beginPath();
-      ctx.moveTo(x1 + nx * (thick + 0.4), y1 + ny * (thick + 0.4));
-      ctx.lineTo(x2 + nx * (thick + 0.4), y2 + ny * (thick + 0.4));
-      ctx.strokeStyle = 'rgba(255,226,160,0.35)';
-      ctx.lineWidth = 0.25;
-      ctx.stroke();
-      if (style === 'metal' && len > 14) {
-        A.ornament(ctx, 3, 2, Math.min(26, len - 6), C.goldLight, phase);
-      }
-      if (style === 'stone' && len > 20) {
-        ctx.strokeStyle = 'rgba(255,244,208,0.6)';
-        ctx.lineWidth = 0.5;
-        ctx.beginPath();
-        ctx.moveTo(4, 1.2); ctx.lineTo(len - 4, 1.2);
-        ctx.stroke();
-      }
+
+      ctx.restore();
     });
     ctx.restore();
   };

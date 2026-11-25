@@ -48,9 +48,18 @@ global.setInterval = () => 0;
   .forEach(f => vm.runInThisContext(fs.readFileSync(path.join(root, f), 'utf8'), { filename: f }));
 
 (async () => {
-  // В браузере фон приходит из BG_DATA; здесь подставляем тот же PNG с диска.
-  const bg = await loadImage(path.join(root, 'assets/bg/kfu-main.png'));
-  KZ.Art.backdrop = function (ctx) { ctx.drawImage(bg, 0, 0, KZ.W, KZ.H); };
+  // В браузере фоны приходят из BG_DATA; здесь подставляем PNG с диска.
+  const bgFiles = {
+    bauman: 'bauman.png', main: 'kfu-main.png',
+    observatory: 'observatory.png', kremlin: 'kremlin.png'
+  };
+  const images = {};
+  await Promise.all(Object.keys(bgFiles).map(async key => {
+    images[key] = await loadImage(path.join(root, 'assets/bg', bgFiles[key]));
+  }));
+  KZ.Art.backdrop = function (ctx, level) {
+    ctx.drawImage(images[level.bg] || images.main, 0, 0, KZ.W, KZ.H);
+  };
 
   const game = new KZ.Game(mainCanvas, new KZ.Input(mainCanvas), new KZ.AudioSystem());
 
@@ -63,7 +72,6 @@ global.setInterval = () => 0;
 
   shot('01-menu');
   shot('02-how', g => g.setState('how'));
-  shot('03-about', g => g.setState('about'));
   shot('04-intro', g => g.loadLevel(0));
   shot('05-play', g => {
     g.setState('play');

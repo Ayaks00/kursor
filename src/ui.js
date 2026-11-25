@@ -18,6 +18,9 @@
     this.el = {
       level: document.getElementById('hud-level'),
       stats: document.getElementById('hud-stats'),
+      chakCount: document.getElementById('chak-count'),
+      chakTotal: document.getElementById('chak-total'),
+      chakFill: document.getElementById('chak-fill'),
       curvLabel: document.getElementById('curv-label'),
       curvFill: document.getElementById('curv-fill'),
       bossBox: document.getElementById('boss-box'),
@@ -122,7 +125,10 @@
       var taken = 0;
       for (var i = 0; i < game.items.length; i++) if (game.items[i].taken) taken++;
       this.el.level.textContent = level.id + '. ' + level.name;
-      this.el.stats.textContent = 'ЧАК-ЧАК ' + taken + '/' + game.items.length + '  СМЕРТИ ' + game.deaths;
+      this.el.stats.textContent = 'СМЕРТИ ' + game.deaths;
+      this.el.chakCount.textContent = taken;
+      this.el.chakTotal.textContent = '/ ' + game.items.length;
+      this.el.chakFill.style.width = (game.items.length ? Math.round(taken / game.items.length * 100) : 0) + '%';
       this.el.curvLabel.textContent = game.target ? 'ЛОБАЧЕВСКИЙ' : 'ПЛОСКОСТЬ';
       this.el.curvFill.style.width = Math.round(game.curvature * 100) + '%';
       var boss = game.boss;

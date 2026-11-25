@@ -160,7 +160,50 @@ h1, h2 {
   font-size: calc(var(--u) * 9); font-weight: bold;
 }
 #hud-level { left: calc(var(--u) * 6); color: var(--gold-light); }
-#hud-stats { right: calc(var(--u) * 6); color: var(--parchment); }
+#hud-stats {
+  top: calc(var(--u) * 40); right: calc(var(--u) * 6);
+  font-size: calc(var(--u) * 8); color: var(--dim);
+}
+
+/* Счётчик чак-чака — отдельный заметный блок, а не строка в HUD. */
+#chakchak-box {
+  position: absolute; top: calc(var(--u) * 4); right: calc(var(--u) * 5);
+  display: flex; align-items: center; gap: calc(var(--u) * 5);
+  width: calc(var(--u) * 122); padding: calc(var(--u) * 4) calc(var(--u) * 6);
+  background: rgba(30, 23, 15, 0.92);
+  border: 1px solid var(--gold);
+  box-shadow: inset 0 0 0 calc(var(--u) * 1) rgba(150, 112, 58, 0.55),
+              0 calc(var(--u) * 2) calc(var(--u) * 6) rgba(0, 0, 0, 0.4);
+  text-align: left;
+}
+.chak-glyph {
+  position: relative; flex: 0 0 calc(var(--u) * 13); height: calc(var(--u) * 16);
+  background: linear-gradient(160deg, #d98d5d, #a85436);
+  border: 1px solid var(--gold-light);
+  border-radius: 45% 45% 30% 30%;
+}
+.chak-glyph::before {
+  content: ''; position: absolute; left: 50%; top: calc(var(--u) * 4);
+  width: calc(var(--u) * 7); height: calc(var(--u) * 7);
+  transform: translateX(-50%); border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #fff3c8, #d9b15c 70%);
+}
+.chak-glyph::after {
+  content: ''; position: absolute; left: 50%; top: calc(var(--u) * 1);
+  width: calc(var(--u) * 5); height: calc(var(--u) * 2);
+  transform: translateX(-50%); background: #c27045;
+  border-top: 1px solid var(--gold-light);
+}
+.chak-data { flex: 1; min-width: 0; }
+.chak-label { color: var(--gold); font-size: calc(var(--u) * 8); letter-spacing: calc(var(--u) * 0.6); }
+.chak-count { display: flex; align-items: baseline; gap: calc(var(--u) * 3); line-height: 1; }
+.chak-count b { color: #fff4d0; font-size: calc(var(--u) * 16); }
+.chak-count span { color: var(--dim); font-size: calc(var(--u) * 10); }
+.chak-meter {
+  height: calc(var(--u) * 4); margin-top: calc(var(--u) * 3);
+  background: #4a3a28; border: 1px solid #96703a;
+}
+#chak-fill { display: block; height: 100%; width: 0; background: linear-gradient(90deg, #96703a, #f5e3ab); }
 
 #curv-box {
   position: absolute; left: calc(var(--u) * 8); bottom: calc(var(--u) * 6);

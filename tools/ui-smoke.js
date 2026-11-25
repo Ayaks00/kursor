@@ -27,7 +27,8 @@ Object.defineProperty(El.prototype, 'innerHTML', { set() { this.children = []; }
 
 const screenNames = ['menu','how','intro','pause','death','complete','victory'];
 const screens = screenNames.map(n => { const e = new El('screen-' + n); e.setAttribute('data-screen', n); return e; });
-const ids = ['ui','stage','menu-list','pause-list','hud','toast','hud-level','hud-stats','curv-label',
+const ids = ['ui','stage','menu-list','pause-list','hud','toast','hud-level','hud-stats',
+  'chakchak-box','chak-count','chak-total','chak-fill','curv-label',
   'curv-fill','boss-box','boss-fill','hint-box','hint-task','intro-title','intro-subtitle','intro-fact',
   'intro-task','complete-name','complete-time','complete-stats'];
 const nodes = {};

@@ -353,10 +353,30 @@
     return bgImages[name];
   }
 
+  var bgStrips = {};
+  function bgStrip(name, im) {
+    if (bgStrips[name]) return bgStrips[name];
+    var w = 480 * A.U, h = 270 * A.U;
+    var cv = document.createElement('canvas');
+    cv.width = w * 2; cv.height = h;
+    var x = cv.getContext('2d');
+    x.imageSmoothingEnabled = false;
+    x.drawImage(im, 0, 0, w, h);
+    x.save();
+    x.translate(w * 2, 0);
+    x.scale(-1, 1);
+    x.drawImage(im, 0, 0, w, h);
+    x.restore();
+    bgStrips[name] = cv;
+    return cv;
+  }
+
   A.backdropFine = function (ctx, level, camX, camY, time) {
     var seed = level.id * 97;
+    var w = 480 * A.U;
     for (var i = 0; i < 72; i++) {
-      var x = ((i * 137 + seed) % 2000) - 40 - camX * 0.12;
+      var raw = (i * 137 + seed - camX * 0.12) % w;
+      var x = raw < 0 ? raw + w : raw;
       var y = 12 + ((i * 83 + seed) % 250) * A.U - camY * 0.05;
       var a = 0.08 + 0.08 * Math.sin(time * 2 + i);
       ctx.globalAlpha = a;
@@ -364,7 +384,8 @@
     }
     ctx.globalAlpha = 0.18;
     for (var j = 0; j < 9; j++) {
-      var gx = ((j * 241 + seed) % 1900) - camX * 0.06;
+      var gr = (j * 241 + seed - camX * 0.06) % w;
+      var gx = gr < 0 ? gr + w : gr;
       ctx.fillStyle = '#fff3c8';
       ctx.fillRect(gx, 0, 1, 1080);
     }
@@ -377,7 +398,18 @@
     ctx.fillRect(0, 0, 480 * A.U, 270 * A.U);
     var im = bgImage(level.bg);
     if (im && im.complete && (im.naturalWidth || im.width)) {
-      ctx.drawImage(im, 0, shiftY, 480 * A.U, 270 * A.U);
+      var w = 480 * A.U, h = 270 * A.U;
+      var period = w * 2;
+      var sx = (-camX * 0.16) % period;
+      if (sx < 0) sx += period;
+      var strip = bgStrip(level.bg, im);
+      if (sx + w <= period) {
+        ctx.drawImage(strip, sx, 0, w, h, 0, shiftY, w, h);
+      } else {
+        var first = period - sx;
+        ctx.drawImage(strip, sx, 0, first, h, 0, shiftY, first, h);
+        ctx.drawImage(strip, 0, 0, w - first, h, first, shiftY, w - first, h);
+      }
       A.backdropFine(ctx, level, camX, camY, time);
       return;
     }

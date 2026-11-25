@@ -6,7 +6,7 @@
     ArrowLeft: 1, ArrowRight: 1, ArrowUp: 1, ArrowDown: 1, Space: 1,
     KeyA: 1, KeyD: 1, KeyW: 1, KeyS: 1, KeyQ: 1, KeyE: 1,
     ShiftLeft: 1, ShiftRight: 1, Escape: 1, KeyP: 1, KeyR: 1,
-    KeyM: 1, KeyF: 1, KeyC: 1, Enter: 1, NumpadEnter: 1
+    KeyM: 1, KeyF: 1, KeyC: 1, KeyK: 1, KeyL: 1, Enter: 1, NumpadEnter: 1
   };
 
   function Input(canvas) {
@@ -65,8 +65,8 @@
   Input.prototype.pausePressed = function () { return this.wasPressed('Escape', 'KeyP'); };
   Input.prototype.restartPressed = function () { return this.wasPressed('KeyR'); };
   Input.prototype.mutePressed = function () { return this.wasPressed('KeyM'); };
-  Input.prototype.idealPressed = function () { return this.wasPressed('KeyF'); };
-  Input.prototype.dashPressed = function () { return this.wasPressed('KeyC'); };
+  Input.prototype.idealPressed = function () { return this.wasPressed('KeyK', 'KeyF'); };
+  Input.prototype.dashPressed = function () { return this.wasPressed('KeyL', 'KeyC'); };
   Input.prototype.upPressed = function () { return this.wasPressed('ArrowUp', 'KeyW'); };
   Input.prototype.downPressed = function () { return this.wasPressed('ArrowDown', 'KeyS'); };
 

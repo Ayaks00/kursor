@@ -38,10 +38,18 @@
     this.curvature = 0;
     this.target = 0;
     this.warp = 0;
+    this.warpMax = 0.5;
+    this.lastSwitchAt = 0;
     this.switches = 0;
     this.camX = 0;
+    this.camY = 0;
     this.menuIndex = 0;
     this.menuRects = [];
+    this.quizIndex = 0;
+    this.quizAnswered = false;
+    this.quizCorrect = false;
+    this.respawnPlane = 0;
+    this.skills = { ideal: { cd: 0, cdMax: 9, lock: 0 }, dash: { cd: 0, cdMax: 5 } };
     this.particles = [];
     this.effects = [];
     this.shakeTime = 0; this.shakeMag = 0;
@@ -51,6 +59,7 @@
     this.hintTime = 0;
     this.player = { x: 0, y: 0, vx: 0, vy: 0, w: 10 * K, h: 14 * K, onGround: false, groundIdx: -1, coyote: 0, jumpBuf: 0, face: 1 };
     this.save = this.loadSave();
+    KZ.setLang(this.save.lang || 'ru');
     this.result = null;
     this.victoryShown = false;
     this.setState('menu');
@@ -59,7 +68,7 @@
   Game.prototype.loadSave = function () {
     var raw = localStorage.getItem(SAVE_KEY);
     if (raw) return JSON.parse(raw);
-    return { unlocked: 0, best: {} };
+    return { unlocked: 0, best: {}, chak: {}, quiz: {}, lang: '' };
   };
 
   Game.prototype.writeSave = function () {
@@ -70,8 +79,11 @@
     this.state = s;
     this.stateTime = 0;
     if (s === 'menu') this.menuIndex = 0;
-    if (s === 'menu') this.audio.setTheme('menu');
-    if (s === 'play') this.audio.setTheme(this.level.boss ? 'boss' : 'game');
+    if (s === 'menu' || s === 'levels' || s === 'language') this.audio.setTheme('menu');
+    if (s === 'play') {
+      var themes = ['bauman', 'kfu', 'observatory', 'dvoika'];
+      this.audio.setTheme(this.level.boss ? 'boss' : (themes[this.levelIndex] || 'game'));
+    }
     if (s === 'victory') this.audio.setTheme('victory');
   };
 
@@ -86,6 +98,8 @@
     this.curvature = 0;
     this.target = 0;
     this.warp = 0.35;
+    this.warpMax = 0.5;
+    this.lastSwitchAt = 0;
     this.switches = 0;
     this.hintTime = lv.id === 1 ? 14 : 0;
     this.hintDismissed = false;
@@ -96,8 +110,14 @@
     this.invuln = 0;
     this.resetPlayer();
     this.camX = 0;
+    this.camY = 0;
+    this.respawnPlane = 0;
+    this.skills = { ideal: { cd: 0, cdMax: 9, lock: 0 }, dash: { cd: 0, cdMax: 5 } };
     if (lv.boss) {
-      this.boss = { x: 480 * K, y: 118 * K, hp: 3, flash: 0, fireTimer: 1.6, hitCooldown: 0, dead: false, fireballs: [] };
+      var done = 0;
+      for (var qk in this.save.quiz) if (this.save.quiz[qk]) done++;
+      var hp0 = Math.max(1, 10 - done);
+      this.boss = { x: 480 * K, y: 118 * K, hp: hp0, maxHp: hp0, flash: 0, fireTimer: 1.6, hitCooldown: 0, dead: false, fireballs: [] };
     } else {
       this.boss = null;
     }
@@ -109,6 +129,7 @@
     p.x = this.respawn.x; p.y = this.respawn.y;
     p.vx = 0; p.vy = 0; p.onGround = false; p.groundIdx = -1;
     p.coyote = 0; p.jumpBuf = 0;
+    p.dash = 0; p.dashSpeed = 0;
     p.trail = [];
   };
 
@@ -150,10 +171,14 @@
   };
 
   Game.prototype.respawnNow = function () {
+    this.target = this.respawnPlane;
+    this.curvature = this.respawnPlane;
     this.resetPlayer();
     this.settleOnPlatform();
     this.camX = clamp(this.player.x - W * 0.38, 0, Math.max(0, this.level.worldW - W));
+    this.camY = clamp(this.player.y - H * 0.52, this.level.worldTop, 0);
     this.invuln = 1.8;
+    this.skills.ideal.cd = 0; this.skills.ideal.lock = 0; this.skills.dash.cd = 0;
     if (this.boss) {
       this.boss.fireballs = [];
       this.boss.fireTimer = 1.6;
@@ -205,16 +230,26 @@
 
   Game.prototype.platformEnds = function (plat) {
     var t = this.curvature;
+    var drift = plat.drift ? Math.sin(this.time * plat.drift.speed + plat.drift.phase) * plat.drift.amp : 0;
     return [
-      [lerp(plat.a[0], plat.ca[0], t), lerp(plat.a[1], plat.ca[1], t)],
-      [lerp(plat.b[0], plat.cb[0], t), lerp(plat.b[1], plat.cb[1], t)]
+      [lerp(plat.a[0], plat.ca[0], t) + drift, lerp(plat.a[1], plat.ca[1], t)],
+      [lerp(plat.b[0], plat.cb[0], t) + drift, lerp(plat.b[1], plat.cb[1], t)]
     ];
   };
 
+  Game.prototype.idealActive = function () {
+    return this.skills.ideal.lock > 0;
+  };
+
   Game.prototype.platformSolid = function (plat) {
+    if (plat.phase2 && (!this.boss || this.boss.hp > 2)) return false;
+    if (plat.kind === 'pulse') return this.time - this.lastSwitchAt < 1.8;
+    if (this.idealActive() &&
+        (plat.kind === 'flat' || plat.kind === 'curve' || plat.kind === 'resonance')) return true;
     return plat.kind === 'both' ||
       (plat.kind === 'flat' && this.curvature < 0.5) ||
-      (plat.kind === 'curve' && this.curvature >= 0.5);
+      (plat.kind === 'curve' && this.curvature >= 0.5) ||
+      (plat.kind === 'resonance' && this.curvature >= 0.5);
   };
 
   Game.prototype.surfaceY = function (ends, x) {
@@ -242,7 +277,9 @@
     }
     if (this.toastTime > 0) this.toastTime -= dt;
 
-    if (this.state === 'menu') this.updateMenu();
+    if (this.state === 'language') this.updateLanguage();
+    else if (this.state === 'menu') this.updateMenu();
+    else if (this.state === 'levels') this.updateLevelMenu();
     else if (this.state === 'how') {
       if (this.input.confirmPressed() || this.input.mouse.clicked) this.setState('menu');
     } else if (this.state === 'intro') {
@@ -251,7 +288,8 @@
     else if (this.state === 'pause') this.updatePause();
     else if (this.state === 'death') {
       if (this.stateTime > 1.25 || this.input.confirmPressed()) this.respawnNow();
-    } else if (this.state === 'complete') {
+    } else if (this.state === 'quiz') this.updateQuiz();
+    else if (this.state === 'complete') {
       if (this.input.confirmPressed()) this.advance();
     } else if (this.state === 'victory') {
       
@@ -304,20 +342,160 @@
     }
   };
 
+  Game.prototype.languageItems = function () {
+    return [
+      { id: 'ru', label: 'РУССКИЙ' },
+      { id: 'en', label: 'ENGLISH' },
+      { id: 'tt', label: 'ТАТАРЧА' }
+    ];
+  };
+
+  Game.prototype.updateLanguage = function () {
+    var items = this.languageItems();
+    if (this.input.upPressed()) this.menuIndex = (this.menuIndex + items.length - 1) % items.length;
+    if (this.input.downPressed()) this.menuIndex = (this.menuIndex + 1) % items.length;
+    if (this.input.confirmPressed()) this.chooseLang(items[this.menuIndex].id);
+  };
+
+  Game.prototype.chooseLang = function (lang) {
+    if (KZ.LANGS.indexOf(lang) < 0) return;
+    this.audio.play('click', 0.5);
+    KZ.setLang(lang);
+    this.save.lang = lang;
+    this.writeSave();
+    if (this.ui) this.ui.applyLanguage();
+    this.setState('menu');
+  };
+
   Game.prototype.menuItems = function () {
-    var list = [{ id: 'new', label: 'НОВАЯ ИГРА' }];
-    if (this.save.unlocked > 0) list.push({ id: 'continue', label: 'ПРОДОЛЖИТЬ' });
-    list.push({ id: 'how', label: 'КАК ИГРАТЬ' });
+    var t = KZ.t;
+    var list = [{ id: 'new', label: t('НОВАЯ ИГРА') }];
+    if (this.save.unlocked > 0) list.push({ id: 'continue', label: t('ПРОДОЛЖИТЬ') });
+    list.push({ id: 'levels', label: t('ВЫБОР УРОВНЯ') });
+    list.push({ id: 'lang', label: KZ.t(this.langLabel()) });
+    list.push({ id: 'how', label: t('КАК ИГРАТЬ') });
     return list;
   };
 
   Game.prototype.menuAction = function (id) {
     if (id === 'new') {
-      this.save.unlocked = 0; this.save.best = {}; this.writeSave();
+      this.save.unlocked = 0; this.save.best = {}; this.save.chak = {}; this.save.quiz = {}; this.writeSave();
       this.loadLevel(0);
     } else if (id === 'continue') {
       this.loadLevel(clamp(this.save.unlocked, 0, KZ.LEVELS.length - 1));
+    } else if (id === 'levels') {
+      this.menuIndex = 0;
+      this.setState('levels');
+    } else if (id === 'lang') {
+      var langs = KZ.LANGS;
+      var next = langs[(langs.indexOf(KZ.lang) + 1) % langs.length];
+      KZ.setLang(next);
+      this.save.lang = next;
+      this.writeSave();
+      if (this.ui) this.ui.applyLanguage();
     } else if (id === 'how') this.setState('how');
+  };
+
+  Game.prototype.langLabel = function () {
+    if (KZ.lang === 'en') return 'ЯЗЫК: ENGLISH';
+    if (KZ.lang === 'tt') return 'ЯЗЫК: ТАТАРЧА';
+    return 'ЯЗЫК: РУССКИЙ';
+  };
+
+  Game.prototype.levelItems = function () {
+    var list = [];
+    for (var i = 0; i < KZ.LEVELS.length; i++) {
+      var locked = i > this.save.unlocked;
+      var lv = KZ.LEVELS[i];
+      var best = this.save.best[lv.id];
+      var chak = this.save.chak[lv.id];
+      var info = locked ? KZ.t(' — ЗАКРЫТ') :
+        ((best !== undefined ? KZ.t(' · ') + best + KZ.t(' с') : '') +
+         (chak !== undefined ? KZ.t(' · чак-чак ') + chak + '/' + lv.items.length : ''));
+      list.push({ id: 'level:' + i, label: (i + 1) + '. ' + KZ.t(lv.name) + info, locked: locked });
+    }
+    list.push({ id: 'back', label: KZ.t('НАЗАД') });
+    return list;
+  };
+
+  Game.prototype.updateLevelMenu = function () {
+    var items = this.levelItems();
+    if (this.input.upPressed()) this.menuIndex = (this.menuIndex + items.length - 1) % items.length;
+    if (this.input.downPressed()) this.menuIndex = (this.menuIndex + 1) % items.length;
+    if (this.input.pausePressed()) {
+      this.audio.play('click', 0.4);
+      this.setState('menu');
+      return;
+    }
+    if (this.input.confirmPressed()) this.levelAction(items[this.menuIndex].id);
+  };
+
+  Game.prototype.levelAction = function (id) {
+    if (id === 'back') {
+      this.audio.play('click', 0.4);
+      this.setState('menu');
+      return;
+    }
+    var idx = parseInt(id.split(':')[1], 10);
+    if (idx > this.save.unlocked) {
+      this.audio.play('click', 0.2);
+      return;
+    }
+    this.audio.play('click', 0.5);
+    this.loadLevel(idx);
+  };
+
+  Game.prototype.quizItems = function () {
+    var lv = KZ.LEVELS[this.quizIndex];
+    if (!lv || !lv.quiz) return [];
+    return lv.quiz.options.map(function (o, i) { return { id: 'answer:' + i, label: KZ.t(o), index: i }; });
+  };
+
+  Game.prototype.updateQuiz = function () {
+    var items = this.quizItems();
+    if (this.quizAnswered) {
+      if (this.input.confirmPressed() || this.input.pausePressed()) this.quizContinue();
+      return;
+    }
+    if (this.input.upPressed()) this.menuIndex = (this.menuIndex + items.length - 1) % items.length;
+    if (this.input.downPressed()) this.menuIndex = (this.menuIndex + 1) % items.length;
+    if (this.input.pausePressed()) { this.quizContinue(); return; }
+    if (this.input.confirmPressed()) this.answerQuiz(this.menuIndex);
+  };
+
+  Game.prototype.answerQuiz = function (index) {
+    if (this.quizAnswered) return;
+    var lv = KZ.LEVELS[this.quizIndex];
+    this.quizCorrect = index === lv.quiz.correct;
+    this.quizAnswered = true;
+    this.menuIndex = 0;
+    if (this.quizCorrect) {
+      this.save.quiz[lv.id] = true;
+      this.writeSave();
+      this.audio.play('win', 0.5);
+    } else {
+      this.audio.play('hit', 0.5);
+    }
+    if (this.ui) this.ui.levelSignature = '';
+  };
+
+  Game.prototype.quizContinue = function () {
+    this.audio.play('click', 0.5);
+    this.advance();
+  };
+
+  Game.prototype.finishLevel = function () {
+    this.save.best[this.level.id] = Math.round(this.timeInLevel * 10) / 10;
+    this.save.chak[this.level.id] = this.items.filter(function (it) { return it.taken; }).length;
+    this.writeSave();
+    if (!this.level.boss && !this.save.quiz[this.level.id]) {
+      this.quizIndex = this.levelIndex;
+      this.quizAnswered = false;
+      this.menuIndex = 0;
+      this.setState('quiz');
+      return;
+    }
+    this.advance();
   };
 
   Game.prototype.advance = function () {
@@ -326,8 +504,6 @@
       this.setState('menu');
     } else {
       this.save.unlocked = Math.max(this.save.unlocked, next);
-      this.save.best[this.level.id] = Math.round(this.timeInLevel * 10) / 10;
-      this.writeSave();
       this.loadLevel(next);
     }
   };
@@ -344,20 +520,78 @@
     }
   };
 
+  Game.prototype.updateSkills = function (dt) {
+    var sk = this.skills, inp = this.input;
+    if (sk.ideal.cd > 0) sk.ideal.cd = Math.max(0, sk.ideal.cd - dt);
+    if (sk.dash.cd > 0) sk.dash.cd = Math.max(0, sk.dash.cd - dt);
+    if (sk.ideal.lock > 0) {
+      sk.ideal.lock = Math.max(0, sk.ideal.lock - dt);
+      this.target = 1;
+    }
+
+    if (inp.idealPressed() && sk.ideal.cd <= 0) {
+      sk.ideal.cd = sk.ideal.cdMax;
+      sk.ideal.lock = 2.6;
+      this.target = 1;
+      this.curvature = 1;
+      this.warp = 0;
+      this.lastSwitchAt = this.time;
+      this.switches++;
+      this.audio.play('toggle', 0.55);
+      var px = this.player.x + 5 * K, py = this.player.y + 6 * K;
+      var vx = this.level.vanish.x, vy = this.level.vanish.y;
+      for (var i = 0; i < 6; i++) {
+        this.spark(lerp(px, vx, i / 6), lerp(py, vy, i / 6), '#8ee9f2', {
+          speed: 1.8, size: 2, glow: true, gravity: 0, life: 0.55
+        });
+      }
+      this.ring(px, py, '#f5e3ab', 34, 0.55);
+      this.ring(vx, vy, '#8ee9f2', 84, 0.85);
+      this.flash('#8ee9f2', 0.16, 0.28);
+      this.shake(1.2, 0.24);
+      this.toast = 'ИДЕАЛЬНАЯ ТОЧКА';
+      this.toastTime = 1.3;
+    }
+
+    if (inp.dashPressed() && sk.dash.cd <= 0) {
+      var p = this.player;
+      sk.dash.cd = sk.dash.cdMax;
+      p.dash = 0.22;
+      p.dashSpeed = this.level.speed * (2.3 + this.curvature * 1.4);
+      p.vy *= 0.2;
+      this.audio.play('jump', 0.45);
+      this.burst(p.x + 5 * K, p.y + 8 * K, this.curvature > 0.5 ? '#8ee9f2' : '#f5e3ab', 14, {
+        speed: 1.6, size: 2, glow: true, gravity: 0, vx: -p.face * 0.8
+      });
+      this.ring(p.x + 5 * K, p.y + 8 * K, '#d9b15c', 22, 0.32);
+      this.toast = 'ГИПЕРБОЛИЧЕСКИЙ СДВИГ';
+      this.toastTime = 1.1;
+    }
+  };
+
   Game.prototype.updatePlay = function (dt) {
     var inp = this.input;
     if (inp.pausePressed()) { this.menuIndex = 0; this.audio.play('click', 0.3); this.setState('pause'); return; }
     if (inp.restartPressed()) { this.restartLevel(); return; }
-    if (inp.togglePressed()) {
+    this.updateSkills(dt);
+    if (inp.togglePressed() && this.skills.ideal.lock <= 0) {
       this.target = this.target ? 0 : 1;
-      this.warp = 0.5;
+      this.warp = 0.72;
+      this.warpMax = 0.72;
+      this.lastSwitchAt = this.time;
       this.switches++;
       this.audio.play('toggle', 0.5);
-      this.burst(this.player.x + 5 * K, this.player.y + 6 * K, '#e3c57d', 10, { speed: 2, glow: true });
-      this.ring(this.player.x + 5 * K, this.player.y + 6 * K, '#f5e3ab', 28, 0.55);
-      this.ring(this.level.vanish.x, this.level.vanish.y, '#e3c57d', 34, 0.7);
-      this.flash('#e3c57d', 0.12, 0.28);
-      this.shake(0.9, 0.22);
+      var px = this.player.x + 5 * K, py = this.player.y + 6 * K;
+      var vx = this.level.vanish.x, vy = this.level.vanish.y;
+      var tint = this.target ? '#8ee9f2' : '#f2d68a';
+      this.burst(px, py, '#f5e3ab', 22, { speed: 2.6, glow: true, gravity: -0.01 });
+      this.burst(vx, vy, tint, 18, { speed: 3.2, glow: true, gravity: 0 });
+      this.ring(px, py, '#f5e3ab', 26, 0.5);
+      this.ring(px, py, tint, 44, 0.7);
+      this.ring(vx, vy, '#e3c57d', 38, 0.65);
+      this.ring(vx, vy, tint, 72, 0.9);
+      this.flash(tint, 0.18, 0.34);
+      this.shake(1.4, 0.3);
     }
     this.curvature += (this.target - this.curvature) * Math.min(1, dt * 10);
     if (Math.abs(this.target - this.curvature) < 0.005) this.curvature = this.target;
@@ -377,8 +611,18 @@
     var dir = (inp.right() ? 1 : 0) - (inp.left() ? 1 : 0);
     if (dir) p.face = dir;
     var accel = p.onGround ? 0.3 : 0.14;
-    p.vx += (dir * lv.speed - p.vx) * accel;
-    if (!dir && p.onGround) p.vx *= 0.72;
+    if (p.dash > 0) {
+      p.dash -= dt;
+      p.vx = p.face * p.dashSpeed;
+      if (this.frameNo % 2 === 0) {
+        this.spark(p.x + 5 * K, p.y + 8 * K, this.curvature > 0.5 ? '#8ee9f2' : '#f5e3ab', {
+          speed: 0.4, size: 1, glow: true, gravity: 0, life: 0.25
+        });
+      }
+    } else {
+      p.vx += (dir * lv.speed - p.vx) * accel;
+      if (!dir && p.onGround) p.vx *= 0.72;
+    }
 
     if (inp.jumpPressed()) p.jumpBuf = 8;
     if (p.jumpBuf > 0) p.jumpBuf -= 1;
@@ -400,7 +644,7 @@
 
     var prevBottom = p.y + p.h;
     var prevX = p.x + p.w / 2;
-    p.vy += lv.gravity;
+    p.vy += p.dash > 0 ? lv.gravity * 0.12 : lv.gravity;
     if (p.vy > 6.5 * K) p.vy = 6.5 * K;
     p.x = clamp(p.x + p.vx, 0, lv.worldW - p.w);
     p.y += p.vy;
@@ -444,6 +688,8 @@
       p.coyote = 5;
       if (!wasGround && impact > 1.7 * K) {
         this.audio.play('land', Math.min(0.5, 0.2 + impact / K * 0.05));
+        var style = lv.platforms[bestIdx].style;
+        this.audio.stepSound(style === 'metal' ? 'metal' : style === 'wood' ? 'wood' : 'stone');
         this.burst(p.x + 5 * K, bestY, '#c8b998', impact > 4 * K ? 8 : 4, { speed: 1, size: 1, gravity: 0.08 });
         this.ring(p.x + 5 * K, bestY, '#e9dfc4', 11, 0.25);
         if (impact > 4 * K) this.shake(0.5, 0.12);
@@ -468,8 +714,9 @@
     
     for (var c = 0; c < this.checkpoints.length; c++) {
       var cp = this.checkpoints[c];
-      if (!cp.active && Math.abs(p.x + 5 * K - cp.x) < 10 * K && Math.abs(p.y + 7 * K - cp.y) < 14 * K) {
+      if (!cp.active && Math.abs(p.x + 5 * K - cp.x) < 14 * K && Math.abs(p.y + 7 * K - cp.y) < 18 * K) {
         cp.active = true;
+        this.respawnPlane = cp.plane === undefined ? (this.curvature >= 0.5 ? 1 : 0) : cp.plane;
         
         this.respawn = { x: cp.x - 5 * K, y: cp.y - 16 * K };
         this.audio.play('checkpoint', 0.55);
@@ -484,6 +731,7 @@
     var hx, hy, hw = 0, hh = 0;
     for (var h = 0; h < this.hazards.length; h++) {
       var hz = this.hazards[h];
+      if (hz.plane !== undefined && hz.plane !== (this.curvature >= 0.5 ? 1 : 0)) continue;
       if (hz.type === 'spikes') { hx = hz.x; hy = hz.y; hw = hz.w; hh = 7 * K; }
       else {
         var ph = this.time * hz.speed;
@@ -501,10 +749,14 @@
       this.burst(this.level.goal.x + 8 * K, this.level.goal.y + 12 * K, '#f5e3ab', 26, { speed: 2.4, size: 2, glow: true, gravity: -0.02 });
       this.ring(this.level.goal.x + 8 * K, this.level.goal.y + 12 * K, '#d9b15c', 36, 0.8);
       this.flash('#f5e3ab', 0.16, 0.3);
-      this.setState('complete');
+      this.finishLevel();
     }
 
-    this.camX = clamp(p.x - W * 0.38, 0, Math.max(0, lv.worldW - W));
+    var targetX = clamp(p.x - W * 0.38, 0, Math.max(0, lv.worldW - W));
+    var targetY = clamp(p.y - H * 0.52, lv.worldTop, 0);
+    var follow = Math.min(1, dt * 7);
+    this.camX += (targetX - this.camX) * follow;
+    this.camY += (targetY - this.camY) * follow;
   };
 
   Game.prototype.updateBoss = function (dt) {
@@ -513,14 +765,14 @@
       if (this.stateTime > 2.4) this.setState('victory');
       return;
     }
-    b.x = 480 * K + Math.sin(this.time * 0.85) * 210 * K;
+    b.x = 480 * K + Math.sin(this.time * 0.85) * 90 * K;
     b.y = 118 * K + Math.sin(this.time * 1.7) * 10 * K;
     if (b.flash > 0) b.flash -= dt;
     if (b.hitCooldown > 0) b.hitCooldown -= dt;
 
     b.fireTimer -= dt;
     if (b.fireTimer <= 0) {
-      var shots = b.hp === 3 ? 1 : 2;
+      var shots = b.hp > 7 ? 1 : b.hp > 4 ? 2 : 3;
       for (var s = 0; s < shots; s++) {
         var ang = Math.atan2(p.y - b.y, p.x - b.x) + (s - (shots - 1) / 2) * 0.28;
         var sp = (2.1 + (3 - b.hp) * 0.3) * K;
@@ -605,8 +857,8 @@
     s.save();
     
     if (!warping) s.translate(ox, oy);
-    if (this.state === 'menu' || this.state === 'how') {
-      A.backdrop(s, KZ.LEVELS[3], 0, this.time);
+    if (this.state === 'menu' || this.state === 'how' || this.state === 'levels' || this.state === 'language') {
+      A.backdrop(s, KZ.LEVELS[4], 0, 0, this.time);
       s.fillStyle = 'rgba(9,9,22,0.55)';
       s.fillRect(0, 0, W, H);
       A.halo(s, 240, 74, 84, '#d9b15c', 0.12);
@@ -615,26 +867,53 @@
       }
     } else {
       this.drawWorld(s);
+      A.foreground(s, this.level, this.camX, this.camY, this.time);
+      A.weather(s, this.level, this.time);
     }
     s.restore();
 
     if (warping) {
       c.clearRect(0, 0, W, H);
-      var k = Math.sin((this.warp / 0.5) * Math.PI);
+      var k = Math.sin((this.warp / this.warpMax) * Math.PI);
       var dir = this.target ? 1 : -1;
       var SLICE = 3 * K;
       for (var y = 0; y < H + SLICE; y += SLICE) {
         var sy = Math.min(y, H - SLICE);
-        var dx = Math.sin((y - this.level.vanish.y) / H * Math.PI) * 7 * K * k * dir;
+        var dx = Math.sin((y - (this.level.vanish.y - this.camY)) / H * Math.PI) * 11 * K * k * dir;
         c.drawImage(this.scene, 0, sy * this.scale, this.scene.width, SLICE * this.scale,
           dx - K + ox, y - K + oy, W + 2 * K, SLICE);
       }
-      c.globalAlpha = 0.22 * k;
+      var vx = this.level.vanish.x - this.camX, vy = this.level.vanish.y - this.camY;
+      c.save();
+      c.globalAlpha = 0.6 * k;
+      c.lineWidth = K * 0.5;
+      for (var ri = 0; ri < 5; ri++) {
+        c.strokeStyle = ri % 2 ? '#8ee9f2' : '#f2d68a';
+        c.beginPath();
+        c.arc(vx, vy, (26 + ri * 46) * K * (0.4 + k), 0, Math.PI * 2);
+        c.stroke();
+      }
+      c.globalAlpha = 0.32 * k;
+      for (var ra = 0; ra < 14; ra++) {
+        var ang = ra / 14 * Math.PI * 2 + this.time * 3 * dir;
+        c.strokeStyle = ra % 3 ? '#f5e3ab' : '#8ee9f2';
+        c.beginPath();
+        c.moveTo(vx + Math.cos(ang) * 18 * K, vy + Math.sin(ang) * 18 * K);
+        c.lineTo(vx + Math.cos(ang) * 290 * K, vy + Math.sin(ang) * 290 * K);
+        c.stroke();
+      }
+      c.globalAlpha = 0.3 * k;
       c.fillStyle = '#e3c57d';
       c.fillRect(0, 0, W, H);
-      c.globalAlpha = 1;
+      c.restore();
     }
     
+    if (this.state !== 'menu' && this.state !== 'levels' && this.state !== 'how' && this.state !== 'language') {
+      var tints = ['rgba(214,145,70,0.045)', 'rgba(118,142,190,0.05)', 'rgba(96,138,190,0.055)', 'rgba(190,150,108,0.045)', 'rgba(198,86,52,0.055)'];
+      c.fillStyle = tints[this.levelIndex % tints.length];
+      c.fillRect(0, 0, W, H);
+    }
+
     if (this.flashTime > 0 && this.flashAlpha > 0) {
       c.globalAlpha = this.flashAlpha * Math.min(1, this.flashTime / Math.max(0.01, this.flashMax));
       c.fillStyle = this.flashColor;
@@ -647,10 +926,10 @@
 
   Game.prototype.drawWorld = function (ctx) {
     var lv = this.level;
-    A.backdrop(ctx, lv, this.camX, this.time);
+    A.backdrop(ctx, lv, this.camX, this.camY, this.time);
 
     ctx.save();
-    ctx.translate(-Math.round(this.camX), 0);
+    ctx.translate(-Math.round(this.camX), -Math.round(this.camY));
 
     A.convergenceGuides(ctx, lv, this.curvature, this.time);
     A.idealPoint(ctx, lv.vanish, this.time, this.curvature);
@@ -659,16 +938,22 @@
       var plat = lv.platforms[i];
       var ends = this.platformEnds(plat);
       if (Math.max(ends[0][0], ends[1][0]) < this.camX - 20 ||
-          Math.min(ends[0][0], ends[1][0]) > this.camX + W + 20 * K) continue;
+          Math.min(ends[0][0], ends[1][0]) > this.camX + W + 20 * K ||
+          Math.max(ends[0][1], ends[1][1]) < this.camY - 20 ||
+          Math.min(ends[0][1], ends[1][1]) > this.camY + H + 20 * K) continue;
       var alpha = plat.kind === 'both' ? 1 :
-        (plat.kind === 'curve' ? 0.18 + this.curvature * 0.82 : 1.0 - this.curvature * 0.82);
-      A.platform(ctx, ends[0], ends[1], plat.style, alpha, this.time);
+        (plat.kind === 'pulse' || plat.kind === 'resonance' ? (this.time - this.lastSwitchAt < 1.8 ? 1 : 0.16) :
+        (plat.phase2 && (!this.boss || this.boss.hp > 2) ? 0.14 :
+        (this.idealActive() && (plat.kind === 'flat' || plat.kind === 'curve') ? 1 :
+        (plat.kind === 'curve' ? 0.18 + this.curvature * 0.82 : 1.0 - this.curvature * 0.82))));
+      A.platform(ctx, ends[0], ends[1], plat.style, alpha, this.time, plat.kind);
     }
 
     if (lv.lamps) {
       for (var li = 0; li < lv.lamps.length; li++) {
         var lampX = lv.lamps[li][0];
-        if (lampX < this.camX - 60 || lampX > this.camX + W + 60) continue;
+        if (lampX < this.camX - 60 || lampX > this.camX + W + 60 ||
+            lv.lamps[li][1] < this.camY - 60 || lv.lamps[li][1] > this.camY + H + 60) continue;
         A.lantern(ctx, lampX, lv.lamps[li][1], this.time);
       }
     }
@@ -677,7 +962,9 @@
     for (var c = 0; c < this.checkpoints.length; c++) A.flag(ctx, this.checkpoints[c], this.time);
     for (var h = 0; h < this.hazards.length; h++) {
       var hz = this.hazards[h];
-      if (hz.type === 'spikes') A.spikes(ctx, hz); else A.orb(ctx, hz, this.time);
+      if (hz.type === 'spikes') A.spikes(ctx, hz);
+      else if (hz.plane !== undefined) A.guard(ctx, hz, this.time, hz.plane === (this.curvature >= 0.5 ? 1 : 0));
+      else A.orb(ctx, hz, this.time);
     }
     if (lv.goal) {
       var active = this.items.filter(function (it) { return it.taken; }).length >= 4;
@@ -714,7 +1001,7 @@
       ctx.strokeStyle = '#e3c57d';
       for (var l = 0; l < 5; l++) {
         ctx.beginPath();
-        ctx.arc(lv.vanish.x - this.camX, lv.vanish.y, (45 + l * 38 + Math.sin(this.time * 2 + l) * 4) * K, 0, Math.PI * 2);
+        ctx.arc(lv.vanish.x - this.camX, lv.vanish.y - this.camY, (45 + l * 38 + Math.sin(this.time * 2 + l) * 4) * K, 0, Math.PI * 2);
         ctx.stroke();
       }
       ctx.restore();

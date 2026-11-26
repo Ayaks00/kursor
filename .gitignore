@@ -1,0 +1,17 @@
+# Dependencies and build output
+node_modules/
+release/
+dist/
+out/
+
+# Logs, caches and temporary files
+*.log
+*.tmp
+*.bak
+*.orig
+*.rej
+*~
+.DS_Store
+Thumbs.db
+__pycache__/
+*.pyc
